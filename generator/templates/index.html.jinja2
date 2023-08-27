@@ -1,0 +1,67 @@
+{% extends "base.html.jinja2" %}
+{% block content %}
+    <h1 class="title">Running free</h1>
+    <p class="lead">Welcome to a developers sport site.</p>
+    <div class="row mb-4">
+        <div class="col clearfix">
+            <img src="{{ url_for('static', filename='/img/running-free.jpg') }}"
+                 class="img-thumbnail img-fluid float-md-end col-md-4 ms-0 mb-2 ms-md-2"
+                 alt="Me finishing the ATG-Winterlauf in 2019">
+            <p>
+                Hi, my name is Michael, I'm a software engineer and when I don't sit professionally on my arse in front
+                of a computer, you'll find me running, cycling or swimming somewhere.
+            </p>
+            <p>
+                This page used to be only about my cycling activities. These days I see myself as a proper
+                friet-athlete, enjoying cycling, running, swimming and french fries, preferable the Dutch variant.
+                Therefor, some statistics will include the overall numbers of mileages, altitude and duration, while
+                others are restricted to cycling only.
+            </p>
+            {% for _summary in summary.itertuples() %}
+            <p>
+                While looking at cycling stats alone, I rode <strong>{{ _summary['total']|fmt_double }}km</strong> since
+                <strong>{{ _summary['since']|fmt_date }}</strong> in total.
+                That was an average of <strong>{{ _summary['avg_per_month']|fmt_double }}km</strong> per month.
+                The worst month was <strong>{{ _summary['worst_month']|fmt_month }}</strong> with
+                <strong>{{ _summary['worst_month_value']|fmt_double }}km</strong>, the best month was
+                <strong>{{ _summary['best_month']|fmt_month }}</strong> with
+                <strong>{{ _summary['best_month_value']|fmt_double }}km</strong>.
+            </p>
+            {% endfor %}
+            <p>
+                I track my mileage on bikes with this site, together with some integrations to my Garmin Archive
+                (Checkout <a href="https://github.com/michael-simons/garmin-babel">Garmin Babel</a> if you are
+                interested in that). I keep a local overview <a href="{{ url_for('mileage') }}">here</a> and I'll answer
+                most follow-requests on <a href="https://www.strava.com/athletes/michael-simons">Strava</a>. I'm
+                somewhat proud of my progress since 2017 and created a dedicated <a
+                    href="{{ url_for('achievements') }}">achievements</a> page in late 2023. The submenu on the gallery
+                link will take you individual pages containing pictures I created while exploring my area and other
+                beautiful places.
+            </p>
+            <p>
+                Please have a look at the <a href="{{ url_for('history') }}">history</a> page if you are looking for the
+                older versions of this site and the content that has been originally created for <a
+                    href="https://leanpub.com/arc42byexample">arc42 by example</a>. The <a
+                    href="https://github.com/michael-simons/biking2">Spring Boot</a> based version of this site ran from
+                2014 until late 2023 until it has been ultimately replaced by a lightweight Python / DuckDB based
+                version.
+            </p>
+            <p>
+                Standing on the shoulders of giants — I'm very happy to use the following technologies and framework
+                amongst others to build this application:
+            </p>
+            <p>
+                <a href="https://www.duckdb.org"><img src="{{ url_for('static', filename='img/duckdb-logo.png') }}"
+                                                      alt="DuckDB"></a>&#160;
+                <a href="https://www.python.org"><img src="{{ url_for('static', filename='img/python-logo.png') }}"
+                                                      alt="Python"></a>&#160;
+                <a href="https://flask.palletsprojects.com/en/2.3.x/"><img
+                        src="{{ url_for('static', filename='img/flask-logo.png') }}"
+                        alt="Flask"></a>
+            <p>
+                Sources for the database schema and the site-generator are here: <a
+                    href="https://github.com/michael-simons/biking3">michael-simons/biking3</a>.
+            </p>
+        </div>
+    </div>
+{% endblock %}

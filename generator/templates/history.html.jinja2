@@ -1,0 +1,55 @@
+{% extends "base.html.jinja2" %}
+{% block title %}History | {{ super() }}{% endblock %}
+{% block content %}
+    <h1 class="title">History</h1>
+    <p class="lead">One project, three different versions, two books and many good people</p>
+    <section class="row mb-4">
+        <div class="col-12">
+            {% markdown %}
+                {% include 'history/ruby_sinatra_sqlite.md' %}
+            {% endmarkdown %}
+        </div>
+    </section>
+
+    <section class="row mb-4">
+        <div class="col-12">
+            {% markdown %}
+                {% include 'history/java_springboot_h2.md' %}
+            {% endmarkdown %}
+        </div>
+
+        <div class="col-12">
+            <a href="https://leanpub.com/arc42byexample">
+                <img src="{{ url_for('static', filename='img/book_arc42byexample_v1.png') }}"
+                     class="img-fluid img-thumbnail" alt="arc42 by example, first edition">
+            </a>
+            <a href="https://leanpub.com/arc42byexample">
+                <img src="{{ url_for('static', filename='img/book_arc42byexample_v2.png') }}"
+                     class="img-fluid img-thumbnail" alt="arc42 by example, second edition">
+            </a>
+            <a href="https://leanpub.com/arc42byexample">
+                <img src="{{ url_for('static', filename='img/book_arc42byexample_v3.png') }}"
+                     class="img-fluid img-thumbnail" alt="arc42 by example, third edition">
+            </a>
+        </div>
+
+        <p>Here's the original content that was created directly by the integration tests of the package: <a
+                href="https://biking.michael-simons.eu/docs/index.html">biking2, Architecture and API</a>.</p>
+    </section>
+
+    <section class="row mb-4">
+        <div class="col-12">
+            {% markdown %}
+                {% include 'history/python_flask_duckdb.md' %}
+            {% endmarkdown %}
+        </div>
+    </section>
+
+    <section class="row mb-4">
+        <div class="col-12">
+            {% markdown %}
+                {% include 'history/summary.md' %}
+            {% endmarkdown %}
+        </div>
+    </section>
+{% endblock %}

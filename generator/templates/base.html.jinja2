@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en" class="h-100">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="">
+        <meta name="author" content="Michael J. Simons">
+        <title>{% block title %}Running free: A developers sport site{% endblock %}</title>
+
+        <link rel="canonical" href="https://biking.michael-simons.eu/">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='fonts/bootstrap-icons.min.css') }}">
+
+        <style>
+            html {
+                scroll-padding-top: 56px;
+            }
+
+            div.chart {
+                max-height: 360px;
+                min-height: 300px;
+            }
+
+            img.strava-thumb {
+                max-height: 100px;
+            }
+
+            .giant {
+                width: 64px;
+            }
+        </style>
+    </head>
+
+    <body class="d-flex flex-column h-100 row-gap-5">
+        <header>
+            <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="/">Running free</a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#navbarCollapse"
+                            aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarCollapse">
+                        <ul class="navbar-nav me-auto mb-2 mb-md-0">
+                            <li class="nav-item">
+                                <a {% block nav_mileage %}class="nav-link" {% endblock %}
+                                   href="{{ url_for('mileage') }}"><i
+                                        class="bi-bar-chart-line"></i> Mileage</a>
+                            </li>
+                            <li class="nav-item">
+                                <a {% block nav_achievements %}class="nav-link" {% endblock %}
+                                   href="{{ url_for('achievements') }}"><i
+                                        class="bi-award"></i> Achievements</a>
+                            </li>
+                            <li class="nav-item">
+                                <a {% block nav_gear %}class="nav-link" {% endblock %} href="{{ url_for('gear') }}"><i
+                                        class="bi-gear"></i> Gear</a>
+                            </li>
+                            {% if gallery_present %}
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                                       data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi-image"></i> Gallery
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDropdown">
+                                        {% for y in range(2016, max_year + 1) %}
+                                            <li>
+                                                <a class="dropdown-item"
+                                                   href="{{ url_for('static', filename='gallery/{:d}/index.html'.format(y)) }}">{{ y }}</a>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </li>
+                            {% endif %}
+                            <li class="nav-item">
+                                <a {% block nav_history %}class="nav-link" {% endblock %} href="/history"><i
+                                        class="bi-clock-history"></i> History</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <main class="flex-shrink-0 bg-body">
+            <div id="start" class="container mt-5">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+
+        <footer class="footer mt-auto py-3 bg-body-secondary">
+            <div class="container fw-light text-body-secondary">
+                <div class="row ">
+                    <div class="col d-flex align-items-center justify-content-start">
+                        <span>&copy; 2009-{{ now.strftime('%Y') }}</span>&#160;
+                        <span><a href="http://michael-simons.eu/">Michael Simons</a></span>
+                    </div>
+                    <div class="col d-flex align-items-center justify-content-end">
+                        <span class="me-2">Last update {{ now|fmt_datetime }}</span>&#160;
+                        <img src="{{ url_for('static', filename='img/biker.gif') }}"
+                             alt="A green emoji riding a bicycle">
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+        <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/chart.umd.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/chartjs-plugin-annotation.min.js') }}"></script>
+    </body>
+</html>

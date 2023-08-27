@@ -1,0 +1,232 @@
+{% extends "base.html.jinja2" %}
+{% block title %}Mileage | {{ super() }}{% endblock %}
+{% block nav_mileage %}class="nav-link active" aria-current="page"{% endblock %}
+{% block content %}
+    <h1 class="title">Mileage</h1>
+    <p class="lead">
+        My <a href="#cycling">cycling</a> and <a href="#running">running</a> statistics as well as the <a
+            href="#yearly_totals">yearly totals</a> since 2018.
+    </p>
+    <section id="cycling" class="row mb-4">
+        <h2>🚴🏻 Cycling</h2>
+        {% for summary in ytd_summary.itertuples() %}
+            <div>
+                <p>
+                    My preferred bike in <strong>{{ now.strftime('%Y') }}</strong> is my
+                    <strong>{{ summary['preferred_bike'] }}</strong> so far. This year's mileage accumulates to
+                    <strong>{{ summary['total']|fmt_double }}km</strong>, making up for an average
+                    <strong>{{ summary['avg_per_month']|fmt_double }}km</strong> per month. The worst month was
+                    <strong>{{ summary['worst_month'].strftime('%B %Y') }}</strong> with
+                    <strong>{{ summary['worst_month_value']|fmt_double }}km</strong>, the best month was
+                    <strong>{{ summary['best_month'].strftime('%B %Y') }}</strong> with
+                    <strong>{{ summary['best_month_value']|fmt_double }}km</strong>.
+                </p>
+                <div class="col-sm-12 col-lg-9 me-2 chart">
+                    <canvas id="current_year"></canvas>
+                </div>
+            </div>
+        {% endfor %}
+        <div>
+            <p>
+                This chart shows my overall monthly average together with the minimum and maximum range for each month.
+                The red line is the overall monthly average since recording mileages. It was heavily inspired by
+                "Temperaturkurve" at <a href="http://www.goetemp.de">Goetemp</a>, a project of my friend <a
+                    href="http://www.jan-von.de">Jan</a>.
+            </p>
+            <div class="col-sm-12 col-lg-9 m-2 chart">
+                <canvas id="monthly_average"></canvas>
+            </div>
+        </div>
+        <nav class="nav">
+            <a href="#start" class="nav-link"><i class="bi-arrow-up-circle"></i>&#160;Back to top </a>
+        </nav>
+    </section>
+    <section id="running" class="row mb-4">
+        <h2>🏃 Running</h2>
+        <p>
+            I began running pretty late in my life in my late thirties. It really grew on me and what started as
+            irregular 3 to 6km runs, grew steadily into a habit of running at least one 21k each month. Since 2020 I did
+            not miss one month without one. With the peak of the pandemic in 2021 and 2022, I increased to an average
+            100k in total per month… It really helped me to keep my head in a positive flow, and I'm still not tired of
+            it.
+        </p>
+        {% if assets_present %}
+            <div class="col-12">
+                {% for y in range(2021, max_year + 1) %}
+                    <div class="row pb-2 ms-2 me-2">
+                        {% for m in range(1,13) %}
+                            <div class="col-1 p-0 pe-1">
+                                <img src="{{ url_for('static', filename='assets/strava/{:d}/{:d}-{:02d}_100km_r.png'.format(y, y, m)) }}"
+                                     class="img-thumbnail strava-thumb m-0" alt="Strava 100k per month">
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <nav class="nav">
+            <a href="#start" class="nav-link"><i class="bi-arrow-up-circle"></i>&#160;Back to top </a>
+        </nav>
+    </section>
+    <section id="yearly_totals" class="row mb-4">
+        <h2>📊 Yearly totals</h2>
+        <p>
+            The following infographics are created by <a href="https://veloviewer.com">Veloviewer</a> and they are
+            clickable. I do like that overall summary a lot.
+        </p>
+        {% if assets_present %}
+            <div class="col-12">
+                <div class="row pb-2 ms-2 me-2">
+                    {% for y in range(2018, max_year + 1) %}
+                        <div class="col-xl-3 col-lg-4 col-6 p-0 pe-1">
+                            <a href="{{ url_for('static', filename='assets/veloviewer/VV_' ~ y ~ '.png') }}">
+                                <img src="{{ url_for('static', filename='assets/veloviewer/VV_' ~ y ~ '.png') }}"
+                                     class="rounded img-thumbnail" alt="Veloviewer statistics">
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+        <nav class="nav">
+            <a href="#start" class="nav-link"><i class="bi-arrow-up-circle"></i>&#160;Back to top </a>
+        </nav>
+    </section>
+
+    <script>
+        window.onload = function () {
+            const current_year = document.getElementById("current_year");
+            if (current_year) {
+                new Chart(
+                    current_year,
+                    {
+                        responsive: true,
+                        data: {
+                            labels: [{{ ytd_totals['month'].to_list()|map('tojson')|join(', ') }}],
+                            datasets: [
+                                {% for name, row in ytd_bikes.items() %}
+                                    {
+                                        type: 'bar',
+                                        label: '{{ name }}',
+                                        data: [{% for v in row %} {{ v ~ ','}} {% endfor %}],
+                                        stack: '{{ "s" ~ name }}',
+                                        borderColor: '{{ bikes.loc[bikes['name'] == name]['color'].values[0] }}',
+                                        backgroundColor: '{{ bikes.loc[bikes['name'] == name]['color'].values[0] }}'
+                                    },
+                                {% endfor %}
+                                {
+                                    type: 'line',
+                                    label: 'Total (Including assorted trips)',
+                                    data: [{{ ytd_totals['value'].to_list()|join(', ') }}],
+                                    cubicInterpolationMode: 'monotone',
+                                    borderColor: '#7CB5EB',
+                                    backgroundColor: '#FFF',
+                                    pointRadius: 4
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            animations: false,
+                            scales: {
+                                y: {
+                                    display: true,
+                                    title: {
+                                        display: true,
+                                        text: 'Mileage (km)'
+                                    }
+                                }
+                            },
+                            plugins: {
+                                title: {
+                                    text: "Milage in {{ now.strftime('%Y') }}",
+                                    display: true
+                                },
+                                legend: {
+                                    labels: {
+                                        filter(item, chart) {
+                                            return !item.text.startsWith('Total');
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                );
+            }
+
+            new Chart(
+                document.getElementById('monthly_average'),
+                {
+                    responsive: true,
+                    data: {
+                        labels: [{{ monthly_averages['month'].to_list()[0:-1]|map('tojson')|join(', ') }}],
+                        datasets: [
+                            {
+                                type: 'line',
+                                label: 'Maximum',
+                                data: [{{ monthly_averages['maximum'].to_list()[0:-1]|map('tojson')|join(', ') }}],
+                                pointStyle: false,
+                                borderColor: 'rgba(124,181,235,0.4)'
+                            },
+                            {
+                                type: 'line',
+                                label: 'Average',
+                                data: [{{ monthly_averages['average'].to_list()[0:-1]|map('tojson')|join(', ') }}],
+                                borderColor: '#7CB5EB',
+                                backgroundColor: 'white',
+                                pointRadius: 4
+                            },
+                            {
+                                type: 'line',
+                                label: 'Minimum',
+                                data: [{{ monthly_averages['minimum'].to_list()[0:-1]|map('tojson')|join(', ') }}],
+                                pointStyle: false,
+                                borderColor: 'rgba(124,181,235,0.4)',
+                                backgroundColor: 'rgba(124,181,235,0.4)',
+                                fill: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        animations: false,
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Mileage (km)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                text: "Monthly average",
+                                display: true
+                            },
+                            legend: {
+                                labels: {
+                                    filter(item, chart) {
+                                        return false;
+                                    }
+                                }
+                            },
+                            annotation: {
+                                annotations: {
+                                    line1: {
+                                        type: 'line',
+                                        yMin: {{ monthly_averages['average'][12] }},
+                                        yMax: {{ monthly_averages['average'][12] }},
+                                        borderColor: '#F04124',
+                                        drawTime: 'beforeDatasetsDraw'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+        };
+    </script>
+{% endblock %}

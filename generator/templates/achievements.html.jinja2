@@ -1,0 +1,160 @@
+{% extends "base.html.jinja2" %}
+{% block title %}Achievements | {{ super() }}{% endblock %}
+{% block nav_achievements %}class="nav-link active" aria-current="page"{% endblock %}
+{% block content %}
+    <h1 class="title">Achievements</h1>
+    <p class="lead">Achievements in <a href="#marathons">marathons</a>, in <a href="#reoccurring_events">reoccurring
+        events</a> and some highlighted <a href="#bike_highlights">bike challenges</a>.</p>
+    <section id="marathons" class="row mb-4">
+        <h2>Marathons and other highlights</h2>
+        <div class="col-12">
+            <div class="row">
+                <div class="col-xl-8 col-lg-12">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Event</th>
+                                    <th>Time</th>
+                                    <th>Pace</th>
+                                </tr>
+                            </thead>
+                            <tbody class="table-group-divider">
+                                {% for event in one_time_only_events.itertuples() %}
+                                    <tr>
+                                        <td>{{ event['achieved_at']|fmt_date }}</td>
+                                        <td>{{ event['name'] }}</td>
+                                        <td>{{ event['time'] }}</td>
+                                        <td>{{ event['pace'] }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <nav class="nav">
+            <a href="#start" class="nav-link"><i class="bi-arrow-up-circle"></i>&#160;Back to top </a>
+        </nav>
+    </section>
+    <section id="reoccurring_events" class="row mb-4">
+        <h2>Reoccurring events</h2>
+        <div class="col-12">
+            <div class="row">
+                {% for event in reoccuring_events %}
+                    <div class="col-xl-4 col-lg-6 col-sm-12">
+                        <h3>{{ event[0] }}</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Distance</th>
+                                        <th>Time</th>
+                                        <th>Pace</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="table-group-divider">
+                                    {% for result in event[1] %}
+                                        <tr>
+                                            <td>{{ result['distance']|fmt_double }}</td>
+                                            <td>{{ result['time'] }}</td>
+                                            <td>{{ result['pace'] }}</td>
+                                            <td>{{ result['achieved_at']|fmt_date }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% if assets_present %}
+            <p>
+                A selection of pictures from those events that I bought <a
+                    href="https://www.sportograf.com/de">Sportograf</a> (The picture on the <a
+                    href="{{ url_for('index') }}">start page</a> is also from Sportgraf, from the Winterlauf 2019):
+            </p>
+            <div class="col-12">
+                <div class="row pb-2 ms-2 me-2">
+                    <div class="col-4 p-1">
+                        <img src="{{ url_for('static', filename='assets/achievements/2018_sylvesterlauf.jpg') }}"
+                             class="img-fluid img-thumbnail" alt="Sylvesterlauf 2018">
+                    </div>
+                    <div class="col-4 p-1">
+                        <img src="{{ url_for('static', filename='assets/achievements/2018_winterlauf.jpg') }}"
+                             class="img-fluid img-thumbnail" alt="Dezember 2018, Winterlauf">
+                    </div>
+                    <div class="col-4 p-1">
+                        <img src="{{ url_for('static', filename='assets/achievements/2019_rursee.jpg') }}"
+                             class="img-fluid img-thumbnail" alt="Rursee Marathon 2019">
+                    </div>
+                    <div class="col-4 p-1">
+                        <img src="{{ url_for('static', filename='assets/achievements/2022_winterlauf1.jpg') }}"
+                             class="img-fluid img-thumbnail" alt="März 2022, Winterlauf 1">
+                    </div>
+                    <div class="col-4 p-1">
+                        <img src="{{ url_for('static', filename='assets/achievements/2022_rursee.jpg') }}"
+                             class="img-fluid img-thumbnail" alt="Rursee Marathon 2022">
+                    </div>
+                    <div class="col-4 p-1">
+                        <img src="{{ url_for('static', filename='assets/achievements/2022_sylvesterlauf.jpg') }}"
+                             class="img-fluid img-thumbnail" alt="Sylvesterlauf 2022">
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        <nav class="nav">
+            <a href="#start" class="nav-link"><i class="bi-arrow-up-circle"></i>&#160;Back to top </a>
+        </nav>
+    </section>
+    {% if assets_present %}
+        <section id="bike_highlights" class="row mb-4">
+            <h2>On bikes</h2>
+            <p>
+                I don't see myself participating in bike races anytime soon, but I did do some pretty cool challenges in
+                the
+                last couple of years, such as doing the <a href="https://www.stoneman-arduenna.com">Stoneman
+                Arduenna</a> on
+                a Gravel bike in one day, racing the Vätternrundan and becoming a <a
+                    href="https://www.cyclinginflanders.cc/flandrien-challenge">true Flandrien</a>.
+            </p>
+            <div class="col-12">
+                <div class="row pb-2 ms-2 me-2">
+                    <div class="col-4 p-1">
+                        <img src="{{ url_for('static', filename='assets/achievements/2021_stoneman_arduenna.jpg') }}"
+                             class="img-fluid img-thumbnail" alt="June 2021, Stoneman Arduenna">
+                    </div>
+                    <div class="col-4 p-1">
+                        <img src="{{ url_for('static', filename='assets/achievements/2021_ vaetternrundan.jpg') }}"
+                             class="img-fluid img-thumbnail" alt="September 2021, Finishing Vätternrundan">
+                    </div>
+                    <div class="col-4 p-1">
+                        <img src="{{ url_for('static', filename='assets/achievements/2023_flandrien_challenge.jpg') }}"
+                             class="img-fluid img-thumbnail"
+                             alt="August 2023, My cobble on Flandrien Challenge wall of fame">
+                    </div>
+                </div>
+            </div>
+            <p>Apart from collecting the "Gran Fondo"-Badge every month since 2018 on Strava, I did the <a
+                    href="https://content.rapha.cc/at/de/a/story/festive-500">Rapha Festive500</a> challenge 5 years in
+                a row:</p>
+            <div class="col-12">
+                <div class="row pb-2 ms-2 me-2">
+                    {% for y in range(2018, 2023) %}
+                        <div class="col-1 p-0 pe-1">
+                            <img src="{{ url_for('static', filename='assets/strava/{:d}/{:d}-12_Festive500.png'.format(y, y)) }}"
+                                 class="img-thumbnail strava-thumb m-0" alt="Strava 100k per month">
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <nav class="nav">
+                <a href="#start" class="nav-link"><i class="bi-arrow-up-circle"></i>&#160;Back to top </a>
+            </nav>
+        </section>
+    {% endif %}
+{% endblock %}

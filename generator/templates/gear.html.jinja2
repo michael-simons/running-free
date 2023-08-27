@@ -1,0 +1,80 @@
+{% extends "base.html.jinja2" %}
+{% block title %}Gear | {{ super() }}{% endblock %}
+{% block content %}
+    <h1 class="title">Gear</h1>
+    <p class="lead">Reading odometers since 2009.</p>
+    <section id="bikes" class="row mb-4">
+        <h2>Bikes</h2>
+        <p>
+            The below table has been the original reason for this site and dates back to a time when there was no
+            Garmin, Strava and all of that, but only non-smart tachometers. I used to look once per month on the
+            odometer and write down its value which is also the reason for the database model (an absolute mileage value
+            per month and then deriving all other metrics from that).
+        </p>
+        <p>
+            Sometimes people ask me for recommendations: I like <a href="https://www.specialized.com">Specialized</a>
+            bikes, they usually fit me quite well. I'm pretty agnostic to saddles as long as they are wide enough. I do
+            prefer hard ones though and bib-pants with good cushions. Most bikes I own are equipped with a <a
+                href="https://www.sq-lab.com/produkte/saettel/sqlab-sattel-612-ergowave.html">SQLab 612</a>.
+            As much as everybody wants to be the next <a href="https://en.wikipedia.org/wiki/Peter_Sagan">Peter
+            Sagan</a> or <a href="https://en.wikipedia.org/wiki/Lotte_Kopecky">Lotte Kopecky</a>, we probably can't,
+            even though we would be able to buy the same gear as they use.
+            I'd rather invest into a mid-range frame instead, the best possible mechanical shifting solution and put the
+            remaining money into a proper good wheel set.
+        </p>
+        <div class="w-auto">
+            <table class="table table-striped table-bordered table-sm">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Bought on</th>
+                        <th>Decommissioned on</th>
+                        <th>Favoured in</th>
+                        <th class="text-end">Last mileage</th>
+                    </tr>
+                </thead>
+                <tbody class="table-group-divider">
+                    {% for index, row in bikes.iterrows() %}
+                        <tr>
+                            <td>{{ row['name'] }}</td>
+                            <td>{{ row['bought_on']|fmt_date }}</td>
+                            <td>{{ row['decommissioned_on']|fmt_date }}</td>
+                            <td>{{ row['favoured_in']|join(', ') }}</td>
+                            <td class="text-end">{{ row['last_milage']|fmt_double }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p>
+            I guess I am not good at selling bikes and I prefer to keep them around these days.
+        </p>
+    </section>
+    <section id="shoes" class="row mb-4">
+        <h2>Shoes</h2>
+        <p>
+            I prefer <a href="https://www.saucony.com">Saucony</a> shoes, especially the Guide 14 for daily use. I
+            bought a couple of them while they were still availble. The Guide 15 feels a tad bit better, but you get
+            wet feet the moment the surface is just slightly wet.
+            <br>
+            I usually use a pair of "every day" trainers for anything between 500 and 1000km. The Guide 14 has been
+            proven to be on the upper end of that.
+        </p>
+        <p>
+            I started running in September 2017 when it was still quite warm. I used normal sport shorts and functional
+            t-shirts for that, nothing fancy. I do remember the first winter using quite some warm garment (actually, a
+            jogger-suite normally predestined to be used in front of a TV) and even put on a woolen hat.
+            <br>
+            At least the latter changed a lot: Even in the winter months you'd usually find me running with just
+            functional underwear and some running shirt. If it's below 10°C I'd usually use long tights and some light
+            pullover. I hardly use anything for the head anymore. Depending on the pace and whether I had time for
+            warm-up, shorts maybe fine, too.
+        </p>
+        <p>
+            The faster you get, the fewer cloths you want to have on. It's easy as that. And for me personally, I prefer
+            running with as few things with me as possible. Hard to believe, but I do leave the phone at home most of
+            the time. I neither use running belts nor dedicated backpacks. On really hot days with long trainings I
+            usually carry a simple bike-bidon with me.
+        </p>
+    </section>
+{% endblock %}
