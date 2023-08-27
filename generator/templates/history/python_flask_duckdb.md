@@ -1,6 +1,8 @@
 
 ## Python, Flask, DuckDB
 
+<i class="bi bi-github"></i> [michael-simons/biking3](https://github.com/michael-simons/biking3){.lead}
+
 ![Python Logo]({{url_for('static', filename='img/python-logo-only.png')}}){.giant}
 
 My life's focussed changed a lot over the last 5 years.

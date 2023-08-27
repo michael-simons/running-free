@@ -1,7 +1,9 @@
 
 ## Ruby, Sinatra, SQLite
 
-![Ruby Logo]({{url_for('static', filename='img/ruby-logo.png')}})
+<i class="bi bi-github"></i> [biking.rb](https://github.com/michael-simons/biking2/blob/a10fe3f254db361b85ac6c8fb70f9101dd29fd46/src/main/webapp/public/misc/biking.rb){.lead}
+
+![Ruby Logo]({{url_for('static', filename='img/ruby-logo.png')}}){.giant}
 
 Time fly's.
 At the time of writing it is already close to 14 years that I wrote a blog about [creating a self-contained MVC application](https://info.michael-simons.eu/2009/07/29/creating-a-self-containing-mvc-application-with-sinatra/).

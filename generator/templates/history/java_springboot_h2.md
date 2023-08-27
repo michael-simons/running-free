@@ -1,6 +1,8 @@
 
 ## Java, Spring Boot, H2
 
+<i class="bi bi-github"></i> [michael-simons/biking2](https://github.com/michael-simons/biking2){.lead}
+
 ![Java Duke]({{url_for('static', filename='img/duke.png')}}){.giant}
 ![Spring Framework Logo]({{url_for('static', filename='img/spring-logo.png')}}){.giant}
 ![Spring Boot Logo]({{url_for('static', filename='img/spring-boot-logo.png')}}){.giant}
