@@ -1,4 +1,4 @@
-# running-free
+# biking3
 
 A collection of scripts, a database schema and a site-generator that creates https://biking.michael-simons.eu.
 The repository is provided for educational purposes.
