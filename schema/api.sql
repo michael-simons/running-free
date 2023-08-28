@@ -209,3 +209,17 @@ CREATE OR REPLACE VIEW v_one_time_only_events AS (
   GROUP BY ALL
   ORDER BY achieved_at, name
 );
+
+
+--
+-- Aggregated mileages per year and bike up excluding the current year
+--
+CREATE OR REPLACE VIEW v_mileage_by_bike_and_year AS (
+  SELECT bikes.id AS id,
+         name,
+         year(recorded_on) - 1 AS year,
+         round(amount - coalesce(lag(amount) OVER (PARTITION BY name ORDER BY recorded_on),0))
+  FROM milages JOIN bikes ON bikes.id = milages.bike_id
+  WHERE strftime(recorded_on, '%m-%d') = '01-01'
+  ORDER BY name, year
+);
