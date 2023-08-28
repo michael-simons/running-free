@@ -100,7 +100,6 @@
                 new Chart(
                     current_year,
                     {
-                        responsive: true,
                         data: {
                             labels: [{{ ytd_totals['month'].to_list()|map('tojson')|join(', ') }}],
                             datasets: [
@@ -158,7 +157,6 @@
             new Chart(
                 document.getElementById('monthly_average'),
                 {
-                    responsive: true,
                     data: {
                         labels: [{{ monthly_averages['month'].to_list()[0:-1]|map('tojson')|join(', ') }}],
                         datasets: [

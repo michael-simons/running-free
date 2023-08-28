@@ -1,67 +1,66 @@
 <section id="statistics" class="row mb-4">
-        <h2>Statistics</h2>
-        <div class="col-2">
-            {% for row in bike.itertuples() %}
-                <dl>
-                    <dt>Bought on</dt>
-                    <dd>{{ row['bought_on']|fmt_date }}</dd>
-                    {% if row['decommissioned_on'] is not nat %}
-                        <dt>Sold on</dt>
-                        <dd>{{ row['decommissioned_on']|fmt_date }}</dd>
-                    {% endif %}
-                    <dt>Last mileage</dt>
-                    <dd>{{ row['last_milage']|fmt_double }}</dd>
-                </dl>
-            {% endfor %}
-        </div>
-        <div class="col-10 ps-5 chart">
-            <canvas id="yearly_usage"></canvas>
-        </div>
-        <script>
-            window.onload = function () {
-                const yearly_usage = document.getElementById("yearly_usage");
-                if (yearly_usage) {
-                    new Chart(
-                        yearly_usage,
-                        {
+    <h2>Statistics</h2>
+    <div class="col-lg-2   col-md-3 col-sm-4">
+        {% for row in bike.itertuples() %}
+            <dl>
+                <dt>Bought on</dt>
+                <dd>{{ row['bought_on']|fmt_date }}</dd>
+                {% if row['decommissioned_on'] is not nat %}
+                    <dt>Sold on</dt>
+                    <dd>{{ row['decommissioned_on']|fmt_date }}</dd>
+                {% endif %}
+                <dt>Last mileage</dt>
+                <dd>{{ row['last_milage']|fmt_double }}</dd>
+            </dl>
+        {% endfor %}
+    </div>
+    <div class=" col-lg-10 col-md-9 col-sm-8  ps-5 chart">
+        <canvas id="yearly_usage"></canvas>
+    </div>
+    <script>
+        window.onload = function () {
+            const yearly_usage = document.getElementById("yearly_usage");
+            if (yearly_usage) {
+                new Chart(
+                    yearly_usage,
+                    {
+                        type: 'bar',
+                        data: {
+                            labels: [{{ mileage_by_year['year'].to_list()|map('tojson')|join(', ') }}],
+                            datasets: [{
+                                data: [{{ mileage_by_year['mileage'].to_list()|map('tojson')|join(', ') }}],
+                                borderColor: '#7CB5EB',
+                                backgroundColor: 'rgba(124,181,235,0.4)',
+                            }],
+                        },
+                        options: {
                             responsive: true,
-                            type: 'bar',
-                            data: {
-                                labels: [{{ mileage_by_year['year'].to_list()|map('tojson')|join(', ') }}],
-                                datasets: [{
-                                    data: [{{ mileage_by_year['mileage'].to_list()|map('tojson')|join(', ') }}],
-                                    borderColor: '#7CB5EB',
-                                    backgroundColor: 'rgba(124,181,235,0.4)',
-                                }],
-                            },
-                            options: {
-                                responsive: true,
-                                animations: false,
-                                scales: {
-                                    y: {
-                                        display: true,
-                                        title: {
-                                            display: true,
-                                            text: 'Mileage (km)'
-                                        }
-                                    }
-                                },
-                                plugins: {
+                            animations: false,
+                            scales: {
+                                y: {
+                                    display: true,
                                     title: {
-                                        display: false
-                                    },
-                                    legend: {
-                                        labels: {
-                                            filter(item, chart) {
-                                                return false;
-                                            }
+                                        display: true,
+                                        text: 'Mileage (km)'
+                                    }
+                                }
+                            },
+                            plugins: {
+                                title: {
+                                    display: false
+                                },
+                                legend: {
+                                    labels: {
+                                        filter(item, chart) {
+                                            return false;
                                         }
                                     }
                                 }
                             }
                         }
-                    );
-                }
-            };
-        </script>
-    </section>
+                    }
+                );
+            }
+        };
+    </script>
+</section>
