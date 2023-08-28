@@ -34,9 +34,15 @@
                     </tr>
                 </thead>
                 <tbody class="table-group-divider">
-                    {% for index, row in bikes.iterrows() %}
+                    {% for row in bikes.itertuples() %}
                         <tr>
-                            <td>{{ row['name'] }}</td>
+                            <td>
+                                {% if row['has_details'] %}
+                                    <a href="{{ url_for('gear', name=row['name']) }}">{{ row['name'] }}</a>
+                                {% else %}
+                                    {{ row['name'] }}
+                                {% endif %}
+                            </td>
                             <td>{{ row['bought_on']|fmt_date }}</td>
                             <td>{{ row['decommissioned_on']|fmt_date }}</td>
                             <td>{{ row['favoured_in']|join(', ') }}</td>

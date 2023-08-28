@@ -1,10 +1,12 @@
 ### running-free specifics ###
 
 sport.db
+Gear
 Strava Badges
 Veloviewer Stats
 generator/static/assets
 generator/static/gallery
+generator/templates/gear
 import
 
 .venv

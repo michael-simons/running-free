@@ -1,17 +1,16 @@
 from datetime import datetime
+
 from flask_frozen import Freezer
+from pathlib import Path
 
 import click
 import duckdb
 import flask
-import os
+import jinja2.exceptions
 import pandas
 
 
 def site(database: str):
-    assets_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), './static/assets'))
-    gallery_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), './static/gallery'))
-
     db = duckdb.connect(database=database, read_only=True)
 
     now = datetime.now()
@@ -26,12 +25,21 @@ def site(database: str):
         'fmt_datetime': lambda v: v.strftime('%Y-%m-%dT%H:%M:%S'),
         'fmt_double': lambda v: format(v, '.2f')
     })
+    app.jinja_env.tests.update({
+        'nat': lambda v: v is pandas.NaT
+    })
+
+    root = Path(__file__).parent
+    assets_dir = root / app.static_folder / "assets"
+    gallery_dir = root / app.static_folder / "gallery"
+    gear_dir = root / app.template_folder / "gear"
+
     app.jinja_env.globals.update({
         'tz': 'Europe/Berlin',
         'now': now,
         'max_year': 2022,
-        'assets_present': os.path.isdir(assets_dir),
-        'gallery_present': os.path.isdir(gallery_dir)
+        'assets_present': assets_dir.is_dir(),
+        'gallery_present': gallery_dir.is_dir()
     })
 
     @app.route('/')
@@ -61,10 +69,31 @@ def site(database: str):
         return flask.render_template('achievements.html.jinja2', reoccuring_events=reoccurring_events,
                                      one_time_only_events=one_time_only_events)
 
+    def gear_template(name: str):
+        """Normalizes the name into the gear folder, throwing on attempted path traversal"""
+        return gear_dir.joinpath(name + ".html.jinja2").resolve().relative_to(gear_dir)
+
     @app.route("/gear/")
-    def gear():
+    @app.route("/gear/<name>/")
+    def gear(name: str = None):
+        if name is not None and not gear_dir.is_dir():
+            flask.abort(404)
+        if name is not None:
+            try:
+                template = gear_template(name)
+                with db.cursor() as con:
+                    bike = con.execute('FROM v_bikes WHERE name = ?', [name]).df()
+                    mileage_by_year = con.execute('FROM v_mileage_by_bike_and_year WHERE name = ?', [name]).df()
+
+                return flask.render_template((gear_dir.parts[-1] / template).as_posix(), bike=bike,
+                                             mileage_by_year=mileage_by_year, pd=pandas)
+            except (ValueError, jinja2.exceptions.TemplateNotFound):
+                flask.abort(404)
+
         with db.cursor() as con:
             bikes = con.execute('FROM v_bikes').df()
+        if gear_dir.is_dir():
+            bikes['has_details'] = bikes['name'].map(lambda n: gear_dir.joinpath(gear_template(n)).is_file())
 
         return flask.render_template('gear.html.jinja2', bikes=bikes)
 
