@@ -54,7 +54,8 @@ def site(database: str):
             bikes = con.execute('FROM v_active_bikes').df()
             ytd_summary = db.execute('FROM v_ytd_summary').df()
             ytd_totals = db.execute('FROM v_ytd_totals').df()
-            ytd_bikes = db.execute('PIVOT (FROM v_ytd_bikes) ON bike USING first(value)').df().set_index('month')
+            ytd_bikes = db.execute('PIVOT (FROM v_ytd_bikes) ON bike USING first(value)').df() \
+                .set_index('month').fillna(0)
             monthly_averages = db.execute('FROM v_monthly_average').df()
 
         return flask.render_template('mileage.html.jinja2', bikes=bikes, ytd_summary=ytd_summary, ytd_totals=ytd_totals,

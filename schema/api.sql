@@ -136,7 +136,7 @@ CREATE OR REPLACE VIEW v_ytd_totals AS (
   SELECT * replace(strftime(month, '%B') AS month)
   FROM v$_total_mileage_by_month
   WHERE month >= date_trunc('year', current_date())
-    AND month < date_trunc('month', current_date())
+    AND month <= last_day(date_trunc('month', current_date()))
 );
 
 
@@ -148,7 +148,7 @@ CREATE OR REPLACE VIEW v_ytd_bikes AS (
     FROM v$_mileage_by_bike_and_month mbbm
     JOIN bikes b ON (b.name = mbbm.bike)
     WHERE month >= date_trunc('year', current_date())
-      AND month < date_trunc('month', current_date())
+      AND month <= last_day(date_trunc('month', current_date()))
       AND NOT b.miscellaneous
 );
 
