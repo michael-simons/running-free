@@ -2,6 +2,8 @@ from datetime import datetime
 
 from flask_frozen import Freezer
 from pathlib import Path
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
 
 import click
 import duckdb
@@ -86,8 +88,16 @@ def site(database: str):
                     bike = con.execute('FROM v_bikes WHERE name = ?', [name]).df()
                     mileage_by_year = con.execute('FROM v_mileage_by_bike_and_year WHERE name = ?', [name]).df()
 
+                x = mileage_by_year['year'].to_numpy().reshape(-1, 1)
+                y = mileage_by_year['mileage'].to_numpy()
+
+                x = PolynomialFeatures(degree=3, include_bias=False).fit_transform(x)
+                model = LinearRegression()
+                model.fit(x, y)
+                trend = model.predict(x)
+
                 return flask.render_template((gear_dir.parts[-1] / template).as_posix(), bike=bike,
-                                             mileage_by_year=mileage_by_year, pd=pandas)
+                                             mileage_by_year=mileage_by_year, pd=pandas, trend=trend)
             except (ValueError, jinja2.exceptions.TemplateNotFound):
                 flask.abort(404)
 

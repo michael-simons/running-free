@@ -31,6 +31,10 @@
                                 data: [{{ mileage_by_year['mileage'].to_list()|map('tojson')|join(', ') }}],
                                 borderColor: '#7CB5EB',
                                 backgroundColor: 'rgba(124,181,235,0.4)',
+                            },{
+                                type: 'line',
+                                data: [{{ trend.tolist()|map('tojson')|join(', ') }}],
+                                 cubicInterpolationMode: 'monotone'
                             }],
                         },
                         options: {
