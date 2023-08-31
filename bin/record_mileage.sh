@@ -11,7 +11,7 @@ duckdb "$DB" -s "
   WITH hlp AS (
     SELECT max(recorded_on) + INTERVAL 1 MONTH AS recorded_on, m.bike_id, last(amount) AS last_amount
     FROM milages m JOIN bikes b ON b.id = m.bike_id
-    WHERE b.name = 'Open'
+    WHERE b.name = '$BIKE'
     GROUP BY ALL
     ORDER BY ALL
   )
