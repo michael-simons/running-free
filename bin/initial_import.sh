@@ -45,7 +45,7 @@ WITH incoming AS (
   FROM '$CSV_DIR/results.csv'
 ) 
 INSERT INTO results
-SELECT id, achieved_at, time[1]*60*60 + time[2]*60 +time[3], distance
+SELECT id, achieved_at, time[1]*60*60 + time[2]*60 + time[3], distance
 FROM incoming i JOIN events e ON e.name = i.name
 ON CONFLICT DO nothing;
 "

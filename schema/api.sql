@@ -228,3 +228,34 @@ CREATE OR REPLACE VIEW v_mileage_by_bike_and_year AS (
   WHERE (strftime(recorded_on, '%m-%d') = '01-01' OR (bikes.decommissioned_on IS NOT NULL AND recorded_on = mr.value))
   ORDER BY name, year
 );
+
+
+--
+-- The median and p95 pace per distance (5k, 10k, 21k and Marathon) and year
+--
+CREATE OR REPLACE VIEW v_median_and_p95_pace_per_distance_and_year AS (
+  WITH ranges AS (
+    SELECT CASE
+             WHEN distance BETWEEN  4.75 AND  6.0 THEN '5'
+             WHEN distance BETWEEN  9.5  AND 12.0 THEN '10'
+             WHEN distance BETWEEN 19.95 AND 25.2 THEN '21'
+             WHEN distance >= 42 THEN 'Marathon'
+             ELSE null
+           END AS range,
+           year(started_on) AS year,
+           percentile_cont([0.5, 0.95]) WITHIN GROUP(ORDER BY duration/distance DESC) AS percentiles
+    FROM garmin_activities
+    WHERE activity_type = 'running'
+      AND range IS NOT NULL
+    GROUP BY range, year
+    ORDER BY try_cast(range AS integer) ASC NULLS LAST, year
+  ), readable_paces AS (
+    SELECT * REPLACE(list_transform(percentiles, pace -> cast(floor(pace/60) AS int) || ':' || lpad(floor(pace%60)::int, 2, '0')) AS percentiles)
+    FROM ranges
+  )
+  SELECT range AS distance,
+         year,
+         percentiles[1] AS median_pace,
+         percentiles[2] AS p95
+  FROM readable_paces
+);
