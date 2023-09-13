@@ -111,6 +111,27 @@
                 </div>
             </div>
         {% endif %}
+        <section id="development" class="row mb-4">
+            <h2>Development</h2>
+            <p>
+                This comes straight from my Garmin data for running which I am tracking since 2017. In the three charts
+                you see the minimum, median and the maximum as well as the p05 and p95 percentiles. I created buckets
+                for the distances in a range of 5% below and 20% over the goal distance.
+            </p>
+            <div class="col-12">
+                <div class="row">
+                    <div class="col-xl-4 col-lg-6 col-sm-12">
+                        <canvas id="development_5k" style="min-height: 400px"></canvas>
+                    </div>
+                    <div class="col-xl-4 col-lg-6 col-sm-12">
+                        <canvas id="development_10k" style="min-height: 400px"></canvas>
+                    </div>
+                    <div class="col-xl-4 col-lg-6 col-sm-12">
+                        <canvas id="development_21k" style="min-height: 400px"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
         <nav class="nav">
             <a href="#start" class="nav-link"><i class="bi-arrow-up-circle"></i>&#160;Back to top </a>
         </nav>
@@ -168,4 +189,87 @@
             </nav>
         </section>
     {% endif %}
+
+    <script>
+        const years = [{{ development['years']|map('tojson')|join(', ') }}];
+
+        function to_mi_ss(val) {
+            return Math.floor(val / 60) + ':' + String(Math.round(val % 60)).padStart(2, '0');
+        }
+
+        function create_chart(data, title, target) {
+
+            const labels = {0: 'Min', 1: 'p05', 2: 'Median', 3: 'p95', 4: 'Max'}
+            const datasets = [];
+            for (let i = data.length - 1; i >= 0; i--) {
+                datasets.push({
+                    label: labels[i],
+                    data: data[i],
+                    borderWidth: i === 0 || i === 4 ? 3 : 1,
+                    fill: i === 0 ? 0 : -1
+                })
+            }
+
+            return new Chart(
+                document.getElementById(target),
+                {
+                    type: 'line',
+                    data: {
+                        labels: years,
+                        datasets: datasets,
+                    },
+                    options: {
+                        responsive: true,
+                        animations: false,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            intersect: false,
+                            mode: 'index',
+                        },
+                        scales: {
+                            y: {
+                                display: true,
+                                reverse: true,
+                                title: {
+                                    display: true,
+                                    text: 'Pace (mm:ss)'
+                                },
+                                ticks: {
+                                    callback: function (val, index) {
+                                        return to_mi_ss(val);
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                text: title,
+                                display: true
+                            },
+                            legend: {
+                                labels: {
+                                    filter(item, chart) {
+                                        return false;
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        return context.dataset.label + ': ' + to_mi_ss(context.parsed.y);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        window.onload = function () {
+            {% for key in development['percentiles'] %}
+                create_chart([{{ development['percentiles'][key]|list|map('tojson')|join(', ') }}], '{{key}}', 'development_{{key}}')
+            {% endfor %}
+        }
+    </script>
 {% endblock %}

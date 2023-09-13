@@ -10,6 +10,7 @@ import duckdb
 import flask
 import jinja2.exceptions
 import pandas
+import functools
 
 
 def site(database: str):
@@ -65,12 +66,32 @@ def site(database: str):
 
     @app.route("/achievements/")
     def achievements():
+        max_year = flask.current_app.jinja_env.globals.get('max_year')
         with db.cursor() as con:
             reoccurring_events = con.execute('FROM v_reoccurring_events').fetchall()
             one_time_only_events = con.execute('FROM v_one_time_only_events').df()
+            pace_percentiles = con.execute(
+                'FROM v_pace_percentiles_per_distance_and_year_seconds WHERE distance <> ? AND year <= ?',
+                ['Marathon', max_year]).df()
+
+        def pivot(distance, data):
+            percentiles = data.loc[data['distance'] == distance]['percentiles']
+            years = zip(*functools.reduce(lambda x, y: x + [y], percentiles, []))
+            return list(years)
+
+        development = {
+            'years': pace_percentiles['year'].unique().tolist(),
+            'percentiles': {
+                '5k': pivot('5', pace_percentiles),
+                '10k': pivot('10', pace_percentiles),
+                '21k': pivot('21', pace_percentiles)
+            }
+        }
+
+
 
         return flask.render_template('achievements.html.jinja2', reoccuring_events=reoccurring_events,
-                                     one_time_only_events=one_time_only_events)
+                                     one_time_only_events=one_time_only_events, development=development)
 
     def gear_template(name: str):
         """Normalizes the name into the gear folder, throwing on attempted path traversal"""
