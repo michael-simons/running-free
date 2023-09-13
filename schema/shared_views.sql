@@ -35,3 +35,23 @@ CREATE OR REPLACE VIEW v$_total_mileage_by_month AS (
   FROM sum_of_milages m LEFT OUTER JOIN sum_of_assorted_trips t USING (month)
   ORDER BY month ASC
 );
+
+
+--
+-- Common distance buckets by year and their pace percentiles
+--
+CREATE OR REPLACE VIEW v$_pace_percentiles_per_distance_and_year AS (
+  SELECT CASE
+           WHEN distance BETWEEN  4.75 AND  6.0 THEN '5'
+           WHEN distance BETWEEN  9.5  AND 12.0 THEN '10'
+           WHEN distance BETWEEN 19.95 AND 25.2 THEN '21'
+           WHEN distance >= 42 THEN 'Marathon'
+         END AS value,
+         year(started_on) AS year,
+         percentile_cont([0.0, 0.05, 0.5, 0.95, 1.0]) WITHIN GROUP(ORDER BY duration/distance DESC) AS percentiles
+  FROM garmin_activities
+  WHERE activity_type = 'running'
+    AND value IS NOT NULL
+  GROUP BY value, year
+  ORDER BY try_cast(value AS integer) NULLS LAST, year
+);
