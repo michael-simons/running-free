@@ -36,12 +36,12 @@ CREATE TABLE IF NOT EXISTS milages(
 --
 CREATE SEQUENCE IF NOT EXISTS lent_milage_id;
 CREATE TABLE IF NOT EXISTS lent_milages (
-  id                  INTEGER PRIMARY KEY DEFAULT(nextval('lent_milage_id')),
-  lent_on             DATE NOT NULL,
-  returned_on         DATE,
-  amount              DECIMAL(8, 2) NOT NULL,
-  created_at          DATETIME NOT NULL,
-  bike_id             INTEGER NOT NULL,
+  id                        INTEGER PRIMARY KEY DEFAULT(nextval('lent_milage_id')),
+  lent_on                   DATE NOT NULL,
+  returned_on               DATE,
+  amount /* in KILOMETRE */ DECIMAL(8, 2) NOT NULL,
+  created_at                DATETIME NOT NULL,
+  bike_id                   INTEGER NOT NULL,
   CONSTRAINT lent_milage_unique UNIQUE(bike_id, lent_on),
   CONSTRAINT lent_milage_bike_fk FOREIGN KEY(bike_id) REFERENCES bikes(id) ON DELETE CASCADE
 );
@@ -52,9 +52,9 @@ CREATE TABLE IF NOT EXISTS lent_milages (
 --
 CREATE SEQUENCE IF NOT EXISTS assorted_trip_id;
 CREATE TABLE IF NOT EXISTS  assorted_trips (
-  id                  INTEGER PRIMARY KEY DEFAULT(nextval('assorted_trip_id')),
-  covered_on          DATE NOT NULL,
-  distance            DECIMAL(8, 2) NOT NULL
+  id                          INTEGER PRIMARY KEY DEFAULT(nextval('assorted_trip_id')),
+  covered_on                  DATE NOT NULL,
+  distance /* in KILOMETRE */ DECIMAL(8, 2) NOT NULL
 );
 
 
@@ -81,4 +81,27 @@ CREATE TABLE IF NOT EXISTS results (
   distance            DECIMAL(9, 3) NOT NULL,
   PRIMARY KEY (event_id, achieved_at),
   FOREIGN KEY (event_id) REFERENCES events(id)
+);
+
+
+--
+-- Stores imported Garmin activities (See https://github.com/michael-simons/garmin-babel)
+--
+CREATE TABLE IF NOT EXISTS garmin_activities (
+  garmin_id                     BIGINT PRIMARY KEY,
+  name                          VARCHAR(512) NOT NULL,
+  started_on                    TIMESTAMP  NOT NULL,
+  activity_type                 VARCHAR(64) NOT NULL,
+  sport_type                    VARCHAR(64),
+  distance /* in KILOMETRE */   DECIMAL(9, 3),
+  elevation_gain /* in METRE */ DECIMAL(9, 3),
+  duration                      INTEGER NOT NULL,
+  elapsed_duration              INTEGER,
+  moving_duration               INTEGER ,
+  v_o_2_max                     TINYINT,
+  start_longitude               DECIMAL(9, 6),
+  start_latitude                DECIMAL(8, 6),
+  end_longitude                 DECIMAL(9, 6),
+  end_latitude                  DECIMAL(8, 6),
+  gear                          VARCHAR(512)
 );
