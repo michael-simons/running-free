@@ -105,3 +105,8 @@ CREATE TABLE IF NOT EXISTS garmin_activities (
   end_latitude                  DECIMAL(8, 6),
   gear                          VARCHAR(512)
 );
+
+--
+-- Add a flag whether the GPX data is available or not
+--
+ALTER TABLE garmin_activities ADD COLUMN IF NOT EXISTS gpx_available BOOLEAN DEFAULT false;
