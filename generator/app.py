@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from flask_frozen import Freezer
+from numpy import nan
 from pathlib import Path
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
@@ -8,9 +9,9 @@ from sklearn.preprocessing import PolynomialFeatures
 import click
 import duckdb
 import flask
+import functools
 import jinja2.exceptions
 import pandas
-import functools
 
 
 def site(database: str):
@@ -69,7 +70,7 @@ def site(database: str):
         max_year = flask.current_app.jinja_env.globals.get('max_year')
         with db.cursor() as con:
             reoccurring_events = con.execute('FROM v_reoccurring_events').fetchall()
-            one_time_only_events = con.execute('FROM v_one_time_only_events').df()
+            one_time_only_events = con.execute('FROM v_one_time_only_events').df().replace({nan: None})
             pace_percentiles = con.execute(
                 'FROM v_pace_percentiles_per_distance_and_year_seconds WHERE distance <> ? AND year <= ?',
                 ['Marathon', max_year]).df()

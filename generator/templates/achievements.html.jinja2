@@ -17,7 +17,7 @@
                                     <th>Date</th>
                                     <th>Event</th>
                                     <th>Time</th>
-                                    <th>Pace</th>
+                                    <th colspan="2">Pace</th>
                                 </tr>
                             </thead>
                             <tbody class="table-group-divider">
@@ -27,6 +27,12 @@
                                         <td>{{ event['name'] }}</td>
                                         <td class="tab-nums">{{ event['time'] }}</td>
                                         <td class="tab-nums">{{ event['pace'] }}</td>
+                                        <td class="text-center">
+                                            {% if assets_present and event['certificate'] %}
+                                                <a href="{{ url_for('static', filename='assets/certificates/' ~ event['certificate']) }}"><i
+                                                        class="bi-patch-check"></i></a>
+                                            {% endif %}
+                                        </td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -65,7 +71,8 @@
                                             <td class="tab-nums">{{ result['achieved_at']|fmt_date }}</td>
                                             <td class="text-center">
                                                 {% if assets_present and result['certificate'] %}
-                                                    <a href="{{ url_for('static', filename='assets/certificates/' ~ result['certificate']) }}"><i class="bi-patch-check"></i></a>
+                                                    <a href="{{ url_for('static', filename='assets/certificates/' ~ result['certificate']) }}"><i
+                                                            class="bi-patch-check"></i></a>
                                                 {% endif %}
                                             </td>
                                         </tr>
