@@ -23,10 +23,10 @@
                             <tbody class="table-group-divider">
                                 {% for event in one_time_only_events.itertuples() %}
                                     <tr>
-                                        <td>{{ event['achieved_at']|fmt_date }}</td>
+                                        <td class="tab-nums">{{ event['achieved_at']|fmt_date }}</td>
                                         <td>{{ event['name'] }}</td>
-                                        <td>{{ event['time'] }}</td>
-                                        <td>{{ event['pace'] }}</td>
+                                        <td class="tab-nums">{{ event['time'] }}</td>
+                                        <td class="tab-nums">{{ event['pace'] }}</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -53,16 +53,21 @@
                                         <th>Distance</th>
                                         <th>Time</th>
                                         <th>Pace</th>
-                                        <th>Date</th>
+                                        <th colspan="2">Date</th>
                                     </tr>
                                 </thead>
                                 <tbody class="table-group-divider">
                                     {% for result in event[1] %}
                                         <tr>
                                             <td>{{ result['distance']|fmt_double }}</td>
-                                            <td>{{ result['time'] }}</td>
-                                            <td>{{ result['pace'] }}</td>
-                                            <td>{{ result['achieved_at']|fmt_date }}</td>
+                                            <td class="tab-nums">{{ result['time'] }}</td>
+                                            <td class="tab-nums">{{ result['pace'] }}</td>
+                                            <td class="tab-nums">{{ result['achieved_at']|fmt_date }}</td>
+                                            <td class="text-center">
+                                                {% if assets_present and result['certificate'] %}
+                                                    <a href="{{ url_for('static', filename='assets/certificates/' ~ result['certificate']) }}"><i class="bi-patch-check"></i></a>
+                                                {% endif %}
+                                            </td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>

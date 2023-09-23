@@ -106,7 +106,14 @@ CREATE TABLE IF NOT EXISTS garmin_activities (
   gear                          VARCHAR(512)
 );
 
+
 --
 -- Add a flag whether the GPX data is available or not
 --
 ALTER TABLE garmin_activities ADD COLUMN IF NOT EXISTS gpx_available BOOLEAN DEFAULT false;
+
+
+--
+-- Add a certificate per result
+--
+ALTER TABLE results ADD COLUMN IF NOT EXISTS certificate BOOLEAN DEFAULT false;

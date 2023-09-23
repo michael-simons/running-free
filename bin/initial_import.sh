@@ -8,27 +8,27 @@ CSV_DIR="$(pwd)/$2"
 
 duckdb $DB -s "
 INSERT INTO assorted_trips SELECT * FROM '$CSV_DIR/assorted_trips.csv';
-WITH 
+WITH
   m AS (SELECT generate_series(1, max(id)) AS r FROM assorted_trips),
   ids AS (SELECT unnest(r) FROM m)
 SELECT count(nextval('assorted_trip_id')) FROM ids;
 
 INSERT INTO bikes SELECT * EXCLUDE(url, label, last_milage) FROM '$CSV_DIR/bikes.csv';
 UPDATE bikes SET created_at = date_trunc('second', created_at);
-WITH 
+WITH
   m AS (SELECT generate_series(1, max(id)) AS r FROM bikes),
   ids AS (SELECT unnest(r) FROM m)
 SELECT count(nextval('bike_id')) FROM ids;
 
 INSERT INTO milages SELECT * FROM '$CSV_DIR/milages.csv';
-WITH 
+WITH
   m AS (SELECT generate_series(1, max(id)) AS r FROM milages),
   ids AS (SELECT unnest(r) FROM m)
 SELECT count(nextval('milage_id')) FROM ids;
 UPDATE milages SET created_at = date_trunc('second', created_at);
 
 INSERT INTO lent_milages SELECT * FROM '$CSV_DIR/lent_milages.csv';
-WITH 
+WITH
   m AS (SELECT generate_series(1, max(id)) AS r FROM lent_milages),
   ids AS (SELECT unnest(r) FROM m)
 SELECT count(nextval('lent_milage_id')) FROM ids;
@@ -44,8 +44,8 @@ WITH incoming AS (
   SELECT name, achieved_at, distance, list_transform(split(duration,':'), x -> x::integer) as time
   FROM '$CSV_DIR/results.csv'
 ) 
-INSERT INTO results
-SELECT id, achieved_at, time[1]*60*60 + time[2]*60 + time[3], distance
+INSERT INTO results BY NAME
+SELECT id AS event_id, achieved_at, time[1]*60*60 + time[2]*60 + time[3] AS duration, distance
 FROM incoming i JOIN events e ON e.name = i.name
 ON CONFLICT DO nothing;
 "

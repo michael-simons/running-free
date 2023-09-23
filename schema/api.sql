@@ -185,6 +185,7 @@ CREATE OR REPLACE VIEW v_reoccurring_events AS (
   SELECT name, list({
     achieved_at: achieved_at,
     distance: distance,
+    certificate: if(certificate, strftime(achieved_at, '%Y-%m-%d') || ' ' || name || '.pdf', null),
     time: lpad(duration//3600, 2, '0') || ':' || lpad((duration%3600)//60, 2, '0') || ':' || lpad(duration%3600%60, 2, '0'),
     pace: cast(floor(duration/distance/60) AS int) || ':' || lpad(round(duration/distance%60, 0)::int, 2, '0')
   })

@@ -10,6 +10,7 @@ generator/templates/gear
 backup
 import
 Garmin
+Urkunden
 
 .venv
 
