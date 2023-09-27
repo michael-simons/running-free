@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS milages(
   created_at          DATETIME NOT NULL DEFAULT(now()),
   bike_id             INTEGER NOT NULL,
   CONSTRAINT milage_unique UNIQUE(bike_id, recorded_on),
-  CONSTRAINT milage_bike_fk FOREIGN KEY(bike_id) REFERENCES bikes(id) ON DELETE CASCADE
+  CONSTRAINT milage_bike_fk FOREIGN KEY(bike_id) REFERENCES bikes(id)
 );
 
 
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS lent_milages (
   created_at                DATETIME NOT NULL,
   bike_id                   INTEGER NOT NULL,
   CONSTRAINT lent_milage_unique UNIQUE(bike_id, lent_on),
-  CONSTRAINT lent_milage_bike_fk FOREIGN KEY(bike_id) REFERENCES bikes(id) ON DELETE CASCADE
+  CONSTRAINT lent_milage_bike_fk FOREIGN KEY(bike_id) REFERENCES bikes(id)
 );
 
 
