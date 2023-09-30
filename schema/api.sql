@@ -25,7 +25,7 @@ CREATE OR REPLACE VIEW v_bikes AS (
     QUALIFY rnk = 1
     ORDER BY year
   ), years AS (
-    SELECT bike, list(year) AS value
+    SELECT bike, list_sort(list(year)) AS value
     FROM ranked_bikes
     GROUP BY all
   ), lent AS (
