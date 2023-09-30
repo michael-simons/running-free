@@ -58,8 +58,11 @@ def site(database: str):
             bikes = con.execute('FROM v_active_bikes').df()
             ytd_summary = db.execute('FROM v_ytd_summary').df()
             ytd_totals = db.execute('FROM v_ytd_totals').df()
-            ytd_bikes = db.execute('PIVOT (FROM v_ytd_bikes) ON bike USING first(value)').df() \
-                .set_index('month').fillna(0)
+            ytd_bikes_query = """
+                SELECT * replace(strftime(month, '%B') AS month) 
+                FROM (PIVOT (FROM v_ytd_bikes) ON bike USING first(value) ORDER by month)
+            """
+            ytd_bikes = db.execute(ytd_bikes_query).df().set_index('month').fillna(0)
             monthly_averages = db.execute('FROM v_monthly_average').df()
 
         return flask.render_template('mileage.html.jinja2', bikes=bikes, ytd_summary=ytd_summary, ytd_totals=ytd_totals,
@@ -88,8 +91,6 @@ def site(database: str):
                 '21k': pivot('21', pace_percentiles)
             }
         }
-
-
 
         return flask.render_template('achievements.html.jinja2', reoccuring_events=reoccurring_events,
                                      one_time_only_events=one_time_only_events, development=development)

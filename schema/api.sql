@@ -144,7 +144,7 @@ CREATE OR REPLACE VIEW v_ytd_totals AS (
 -- Monthly totals by bike in the current, can be safely pivoted on the bike.
 --
 CREATE OR REPLACE VIEW v_ytd_bikes AS (
-    SELECT mbbm.* replace(strftime(month, '%B') AS month)
+    SELECT mbbm.*
     FROM v$_mileage_by_bike_and_month mbbm
     JOIN bikes b ON (b.name = mbbm.bike)
     WHERE month >= date_trunc('year', current_date())
