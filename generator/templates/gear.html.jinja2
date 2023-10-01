@@ -43,10 +43,10 @@
                                     {{ row['name'] }}
                                 {% endif %}
                             </td>
-                            <td>{{ row['bought_on']|fmt_date }}</td>
-                            <td>{{ row['decommissioned_on']|fmt_date }}</td>
+                            <td class="tab-nums">{{ row['bought_on']|fmt_date }}</td>
+                            <td class="tab-nums">{{ row['decommissioned_on']|fmt_date }}</td>
                             <td>{{ row['favoured_in']|join(', ') }}</td>
-                            <td class="text-end">{{ row['last_milage']|fmt_double }}</td>
+                            <td class="tab-nums text-end">{{ row['last_milage']|fmt_double }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
