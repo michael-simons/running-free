@@ -117,3 +117,11 @@ ALTER TABLE garmin_activities ADD COLUMN IF NOT EXISTS gpx_available BOOLEAN DEF
 -- Add a certificate per result
 --
 ALTER TABLE results ADD COLUMN IF NOT EXISTS certificate BOOLEAN DEFAULT false;
+
+--
+-- Change certificate to type
+--
+ALTER TABLE results ALTER COLUMN certificate TYPE VARCHAR(8);
+ALTER TABLE results ALTER COLUMN certificate SET DEFAULT NULL;
+UPDATE results SET certificate = null WHERE certificate = 'false';
+UPDATE results SET certificate = 'pdf' WHERE certificate = 'true';
