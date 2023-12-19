@@ -27,7 +27,8 @@ def site(database: str):
         'fmt_date': lambda v: v.strftime('%Y-%m-%d') if not (v is None or v is pandas.NaT) else '',
         'fmt_time': lambda v: v.strftime('%H:%M'),
         'fmt_datetime': lambda v: v.strftime('%Y-%m-%dT%H:%M:%S'),
-        'fmt_double': lambda v: format(v, '.2f')
+        'fmt_double': lambda v: format(v, '.2f'),
+        'fmt_int': lambda v: format(v, '.0f')
     })
     app.jinja_env.tests.update({
         'nat': lambda v: v is pandas.NaT
@@ -110,6 +111,8 @@ def site(database: str):
                 with db.cursor() as con:
                     bike = con.execute('FROM v_bikes WHERE name = ?', [name]).df()
                     mileage_by_year = con.execute('FROM v_mileage_by_bike_and_year WHERE name = ?', [name]).df()
+                    maintenance = con.execute('FROM v_maintenances WHERE name = ?', [name]).df()
+                    specs = con.execute('FROM v_specs WHERE name = ?', [name]).df()
 
                 x = mileage_by_year['year'].to_numpy().reshape(-1, 1)
                 y = mileage_by_year['mileage'].to_numpy()
@@ -120,7 +123,8 @@ def site(database: str):
                 trend = model.predict(x)
 
                 return flask.render_template((gear_dir.parts[-1] / template).as_posix(), bike=bike,
-                                             mileage_by_year=mileage_by_year, pd=pandas, trend=trend)
+                                             mileage_by_year=mileage_by_year, pd=pandas, trend=trend,
+                                             maintenance=maintenance, specs=specs)
             except (ValueError, jinja2.exceptions.TemplateNotFound):
                 flask.abort(404)
 

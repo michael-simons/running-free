@@ -1,8 +1,8 @@
 <section id="statistics" class="row mb-4">
     <h2>Statistics</h2>
-    <div class="col-lg-2   col-md-3 col-sm-4">
-        {% for row in bike.itertuples() %}
-            <dl>
+    <div class="col-xl-2 col-lg-3 col-md-12">
+        <dl>
+            {% for row in bike.itertuples() %}
                 <dt>Bought on</dt>
                 <dd>{{ row['bought_on']|fmt_date }}</dd>
                 {% if row['decommissioned_on'] is not nat %}
@@ -11,10 +11,26 @@
                 {% endif %}
                 <dt>Last mileage</dt>
                 <dd>{{ row['last_milage']|fmt_double }}</dd>
-            </dl>
-        {% endfor %}
+            {% endfor %}
+            {% if not specs.empty %}
+                <dt>Specifications</dt>
+                <dd>
+                    <ul>
+                        {% for result in specs.itertuples() %}
+                            <li>
+                                {% if result['removed'] %}
+                                    <s>{{ result['item'] }}</s>
+                                {% else %}
+                                    {{ result['item'] }}
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </dd>
+            {% endif %}
+        </dl>
     </div>
-    <div class=" col-lg-10 col-md-9 col-sm-8  ps-5 chart">
+    <div class="col-xl-10 col-lg-9 col-md-12 ps-5 chart">
         <canvas id="yearly_usage"></canvas>
     </div>
     <script>
@@ -31,10 +47,10 @@
                                 data: [{{ mileage_by_year['mileage'].to_list()|map('tojson')|join(', ') }}],
                                 borderColor: '#7CB5EB',
                                 backgroundColor: 'rgba(124,181,235,0.4)',
-                            },{
+                            }, {
                                 type: 'line',
                                 data: [{{ trend.tolist()|map('tojson')|join(', ') }}],
-                                 cubicInterpolationMode: 'monotone'
+                                cubicInterpolationMode: 'monotone'
                             }],
                         },
                         options: {

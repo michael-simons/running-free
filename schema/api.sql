@@ -25,7 +25,7 @@ CREATE OR REPLACE VIEW v_bikes AS (
     QUALIFY rnk = 1
     ORDER BY year
   ), years AS (
-    SELECT bike, list_sort(list(year)) AS value
+    SELECT bike, list(year ORDER BY year) AS value
     FROM ranked_bikes
     GROUP BY all
   ), lent AS (
@@ -188,7 +188,7 @@ CREATE OR REPLACE VIEW v_reoccurring_events AS (
     time: lpad(duration//3600, 2, '0') || ':' || lpad((duration%3600)//60, 2, '0') || ':' || lpad(duration%3600%60, 2, '0'),
     pace: cast(floor(duration/distance/60) AS int) || ':' || lpad(round(duration/distance%60, 0)::int, 2, '0'),
     certificate: if(certificate IS NOT NULL, strftime(achieved_at, '%Y-%m-%d') || ' ' || name || '.' || certificate, null)
-  })
+  } ORDER BY achieved_at)
   FROM events e JOIN results r ON r.event_id = e.id
   WHERE NOT one_time_only
   GROUP BY ALL
@@ -248,4 +248,38 @@ CREATE OR REPLACE VIEW v_pace_percentiles_per_distance_and_year AS (
 CREATE OR REPLACE VIEW v_pace_percentiles_per_distance_and_year_seconds AS (
   SELECT value AS distance, year, percentiles
   FROM v$_pace_percentiles_per_distance_and_year
+);
+
+
+--
+-- Conducted maintenances
+--
+CREATE OR REPLACE VIEW v_maintenances AS (
+  WITH src AS (
+    SELECT b.id, name,
+           conducted_on, milage,
+           i.id AS item_id,
+           {
+             item: item,
+             lasted: milage - lag(milage) OVER(PARTITION BY bike_id, item ORDER BY conducted_on)
+           } AS item
+    FROM bikes b
+      JOIN bike_maintenance m ON m.bike_id = b.id
+      JOIN bike_maintenance_line_items i ON maintenance_id = m.id
+  )
+  SELECT * EXCLUDE (item_id, item), list(item ORDER BY item_id) AS items
+  FROM src
+  GROUP BY ALL
+  ORDER BY name, conducted_on
+);
+
+
+--
+-- Specs
+--
+CREATE OR REPLACE VIEW v_specs AS (
+  SELECT b.id, name, pos, item, removed
+  FROM bikes b
+    JOIN bike_specs s ON s.bike_id = b.id
+  ORDER BY name, pos
 );

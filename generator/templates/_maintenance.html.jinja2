@@ -1,0 +1,23 @@
+<dl>
+    <dt>Maintenance</dt>
+    <dd>
+        {% for result in maintenance.itertuples() %}
+            <ul>
+                <li><strong>{{ result['conducted_on']|fmt_date }}, {{ result['milage']|fmt_int }}km</strong>
+                    <ul>
+                        {% for item in result['items'] %}
+                            <li>
+                                {% if item['lasted'] %}
+                                    {{ item['item'][0:-1] }}{{ (', ' if item['item'][-1] == ')' else item['item'][-1] + ' (') + 'lasted' }}
+                                    {{ item['lasted']|fmt_int }}km)
+                                {% else %}
+                                    {{ item['item'] }}
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            </ul>
+        {% endfor %}
+    </dd>
+</dl>
