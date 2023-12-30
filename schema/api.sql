@@ -217,12 +217,12 @@ CREATE OR REPLACE VIEW v_one_time_only_events AS (
 -- Aggregated mileages per year and bike up excluding the current year
 --
 CREATE OR REPLACE VIEW v_mileage_by_bike_and_year AS (
-    WITH max_recordings AS (
-      SELECT bike_id, max(recorded_on) AS value FROM milages GROUP BY bike_id
+  WITH max_recordings AS (
+    SELECT bike_id, max(recorded_on) AS value FROM milages GROUP BY bike_id
   )
   SELECT bikes.id AS id,
          name,
-         year(recorded_on) - CASE WHEN recorded_on = mr.value THEN 0 ELSE 1 END AS year,
+         year(recorded_on) - CASE WHEN recorded_on = mr.value AND strftime(mr.value, '%m-%d') <> '01-01' THEN 0 ELSE 1 END AS year,
          round(amount - coalesce(lag(amount) OVER (PARTITION BY name ORDER BY recorded_on),0)) AS mileage
   FROM bikes
     JOIN milages ON milages.bike_id = bikes.id
