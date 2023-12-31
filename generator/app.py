@@ -42,7 +42,7 @@ def site(database: str):
     app.jinja_env.globals.update({
         'tz': 'Europe/Berlin',
         'now': now,
-        'max_year': 2022,
+        'max_year': 2023,
         'assets_present': assets_dir.is_dir(),
         'gallery_present': gallery_dir.is_dir()
     })
