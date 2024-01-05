@@ -132,20 +132,20 @@ UPDATE results SET certificate = 'pdf' WHERE certificate = 'true';
 --
 CREATE SEQUENCE IF NOT EXISTS bike_maintenance_id;
 CREATE TABLE IF NOT EXISTS bike_maintenance (
-    id                        INTEGER PRIMARY KEY DEFAULT(nextval('bike_maintenance_id')),
-    bike_id                   INTEGER NOT NULL,
-    conducted_on              DATE NOT NULL,
-    milage /* in KILOMETRE */ DECIMAL(8, 2) NOT NULL,
-    CONSTRAINT bike_maintenance_unique UNIQUE(bike_id, conducted_on),
-    CONSTRAINT bike_maintenance_bike_fk FOREIGN KEY(bike_id) REFERENCES bikes(id)
+  id                        INTEGER PRIMARY KEY DEFAULT(nextval('bike_maintenance_id')),
+  bike_id                   INTEGER NOT NULL,
+  conducted_on              DATE NOT NULL,
+  milage /* in KILOMETRE */ DECIMAL(8, 2) NOT NULL,
+  CONSTRAINT bike_maintenance_unique UNIQUE(bike_id, conducted_on),
+  CONSTRAINT bike_maintenance_bike_fk FOREIGN KEY(bike_id) REFERENCES bikes(id)
 );
 
 CREATE SEQUENCE IF NOT EXISTS maintenance_li_id;
 CREATE TABLE IF NOT EXISTS bike_maintenance_line_items (
-    id              INTEGER PRIMARY KEY DEFAULT(nextval('maintenance_li_id')),
-    maintenance_id  INTEGER NOT NULL,
-    item            VARCHAR(512) NOT NULL,
-    CONSTRAINT line_item_maintenance_fk FOREIGN KEY(maintenance_id) REFERENCES bike_maintenance(id)
+  id              INTEGER PRIMARY KEY DEFAULT(nextval('maintenance_li_id')),
+  maintenance_id  INTEGER NOT NULL,
+  item            VARCHAR(512) NOT NULL,
+  CONSTRAINT line_item_maintenance_fk FOREIGN KEY(maintenance_id) REFERENCES bike_maintenance(id)
 );
 
 
@@ -154,10 +154,34 @@ CREATE TABLE IF NOT EXISTS bike_maintenance_line_items (
 --
 CREATE SEQUENCE IF NOT EXISTS bike_spec_id;
 CREATE TABLE IF NOT EXISTS bike_specs (
-    id                        INTEGER PRIMARY KEY DEFAULT(nextval('bike_spec_id')),
-    bike_id                   INTEGER NOT NULL,
-    pos                       INTEGER NOT NULL,
-    item                      VARCHAR(512) NOT NULL,
-    removed                   BOOLEAN NOT NULL DEFAULT false,
-    CONSTRAINT bike_spec_bike_fk FOREIGN KEY(bike_id) REFERENCES bikes(id)
+  id                        INTEGER PRIMARY KEY DEFAULT(nextval('bike_spec_id')),
+  bike_id                   INTEGER NOT NULL,
+  pos                       INTEGER NOT NULL,
+  item                      VARCHAR(512) NOT NULL,
+  removed                   BOOLEAN NOT NULL DEFAULT false,
+  CONSTRAINT bike_spec_bike_fk FOREIGN KEY(bike_id) REFERENCES bikes(id)
 );
+
+
+--
+-- Health and fitness metrics
+--
+CREATE TABLE IF NOT EXISTS health_metrics (
+  ref_date           DATE PRIMARY KEY,
+  chronological_age  UTINYINT,
+  biological_age     DECIMAL(5,2),
+  weight             DECIMAL(5,2),
+  body_fat           DECIMAL(5,2),
+  resting_heart_rate UTINYINT,
+  vo2max_biometric   DECIMAL(5,2),
+  vo2max_running     DECIMAL(5,2),
+  vo2max_cycling     DECIMAL(5,2),
+  avg_stress_level   UTINYINT,
+  min_heart_rate     UTINYINT,
+  max_heart_rate     UTINYINT,
+  body_water         DECIMAL(5,2),
+  bone_mass          DECIMAL(5,2),
+  muscle_mass        DECIMAL(5,2),
+  lowest_spo2_value  UTINYINT
+);
+
