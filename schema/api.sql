@@ -305,5 +305,5 @@ CREATE OR REPLACE VIEW v_health_by_age AS (
     avg_biological_age NOT NULL OR avg_resting_heart_rate NOT NULL OR
     avg_weight NOT NULL OR avg_body_fat NOT NULL
   )
-  ORDER BY year
+  ORDER BY year, chronological_age
 );
