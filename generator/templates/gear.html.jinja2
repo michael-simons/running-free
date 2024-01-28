@@ -74,7 +74,7 @@
                         <figure class="figure">
                             <img src="{{ url_for('static', filename='assets/gear/Shoes/' ~ shoe['picture']['filename']) }}"
                                  class="figure-img img-fluid img-thumbnail" alt="{{ shoe['name'] }}">
-                            <figcaption class="figure-caption">{{ shoe['name'] }} after {{ shoe['picture']['milage'] }}km {{ '(last run)' if shoe['picture']['last_run'] }}
+                            <figcaption class="figure-caption">{{ shoe['name'] }} after {{ shoe['picture']['milage'] }}km{{ ' (last run)' if shoe['picture']['last_run'] }}.
                             </figcaption>
                         </figure>
                     </div>
