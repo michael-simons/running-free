@@ -19,13 +19,13 @@
             </p>
             {% for _summary in summary.itertuples() %}
             <p>
-                While looking at cycling stats alone, I rode <strong>{{ _summary['total']|fmt_double }}km</strong> since
+                While looking at cycling stats alone, I rode <strong>{{ _summary['total']|fmt_int }}km</strong> since
                 <strong>{{ _summary['since']|fmt_date }}</strong> in total.
-                That was an average of <strong>{{ _summary['avg_per_month']|fmt_double }}km</strong> per month.
+                That was an average of <strong>{{ _summary['avg_per_month']|fmt_int }}km</strong> per month.
                 The worst month was <strong>{{ _summary['worst_month']|fmt_month }}</strong> with
-                <strong>{{ _summary['worst_month_value']|fmt_double }}km</strong>, the best month was
+                <strong>{{ _summary['worst_month_value']|fmt_int }}km</strong>, the best month was
                 <strong>{{ _summary['best_month']|fmt_month }}</strong> with
-                <strong>{{ _summary['best_month_value']|fmt_double }}km</strong>.
+                <strong>{{ _summary['best_month_value']|fmt_int }}km</strong>.
             </p>
             {% endfor %}
             <p>
