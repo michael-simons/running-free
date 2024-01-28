@@ -63,9 +63,35 @@
             bought a couple of them while they were still availble. The Guide 15 feels a tad bit better, but you get
             wet feet the moment the surface is just slightly wet.
             <br>
-            I usually use a pair of "every day" trainers for anything between 500 and 1000km. The Guide 14 has been
+            I usually use a pair of "every day" trainers for a lifespan between 500 and 1000km. The Guide 14 has been
             proven to be on the upper end of that.
         </p>
+        {% if assets_present %}
+            <p>Here are a couple of shoes I liked:</p>
+            <div class="row pb-2 ms-2 me-2">
+                <div class="col-4 p-1">
+                    <figure class="figure">
+                        <img src="{{ url_for('static', filename='assets/gear/Shoes/Saucony_GuideISO2TR_1011km.jpg') }}"
+                             class="figure-img img-fluid img-thumbnail" alt="Saucony Guide ISO 2 TR">
+                        <figcaption class="figure-caption">Saucony Guide ISO 2 TR after 1011km (last run).</figcaption>
+                    </figure>
+                </div>
+                <div class="col-4 p-1">
+                    <figure class="figure">
+                        <img src="{{ url_for('static', filename='assets/gear/Shoes/Saucony_Guide14_1120km.jpg') }}"
+                             class="figure-img img-fluid img-thumbnail" alt="Saucony Guide 14">
+                        <figcaption class="figure-caption">Saucony Guide 14 after 1120km (last run).</figcaption>
+                    </figure>
+                </div>
+                <div class="col-4 p-1">
+                    <figure class="figure">
+                        <img src="{{ url_for('static', filename='assets/gear/Shoes/Saucony_Ride15TR_553km.jpg') }}"
+                             class="figure-img img-fluid img-thumbnail" alt="Saucony Ride 15 TR">
+                        <figcaption class="figure-caption">Saucony Ride 15 TR after 553km.</figcaption>
+                    </figure>
+                </div>
+            </div>
+        {% endif %}
         <p>
             I started running in September 2017 when it was still quite warm. I used normal sport shorts and functional
             t-shirts for that, nothing fancy. I do remember the first winter using quite some warm garment (actually, a
