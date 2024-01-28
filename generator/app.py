@@ -130,10 +130,11 @@ def site(database: str):
 
         with db.cursor() as con:
             bikes = con.execute('FROM v_bikes').df()
+            shoes = con.execute('FROM v_shoes').df()
         if gear_dir.is_dir():
             bikes['has_details'] = bikes['name'].map(lambda n: gear_dir.joinpath(gear_template(n)).is_file())
 
-        return flask.render_template('gear.html.jinja2', bikes=bikes)
+        return flask.render_template('gear.html.jinja2', bikes=bikes, shoes=shoes)
 
     @app.route("/history/")
     def history():

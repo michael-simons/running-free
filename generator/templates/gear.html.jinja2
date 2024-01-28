@@ -69,27 +69,16 @@
         {% if assets_present %}
             <p>Here are a couple of shoes I liked:</p>
             <div class="row pb-2 ms-2 me-2">
-                <div class="col-4 p-1">
-                    <figure class="figure">
-                        <img src="{{ url_for('static', filename='assets/gear/Shoes/Saucony_GuideISO2TR_1011km.jpg') }}"
-                             class="figure-img img-fluid img-thumbnail" alt="Saucony Guide ISO 2 TR">
-                        <figcaption class="figure-caption">Saucony Guide ISO 2 TR after 1011km (last run).</figcaption>
-                    </figure>
-                </div>
-                <div class="col-4 p-1">
-                    <figure class="figure">
-                        <img src="{{ url_for('static', filename='assets/gear/Shoes/Saucony_Guide14_1120km.jpg') }}"
-                             class="figure-img img-fluid img-thumbnail" alt="Saucony Guide 14">
-                        <figcaption class="figure-caption">Saucony Guide 14 after 1120km (last run).</figcaption>
-                    </figure>
-                </div>
-                <div class="col-4 p-1">
-                    <figure class="figure">
-                        <img src="{{ url_for('static', filename='assets/gear/Shoes/Saucony_Ride15TR_553km.jpg') }}"
-                             class="figure-img img-fluid img-thumbnail" alt="Saucony Ride 15 TR">
-                        <figcaption class="figure-caption">Saucony Ride 15 TR after 553km.</figcaption>
-                    </figure>
-                </div>
+                {% for shoe in shoes.itertuples() %}
+                    <div class="col-4 p-1">
+                        <figure class="figure">
+                            <img src="{{ url_for('static', filename='assets/gear/Shoes/' ~ shoe['picture']['filename']) }}"
+                                 class="figure-img img-fluid img-thumbnail" alt="{{ shoe['name'] }}">
+                            <figcaption class="figure-caption">{{ shoe['name'] }} after {{ shoe['picture']['milage'] }}km {{ '(last run)' if shoe['picture']['last_run'] }}
+                            </figcaption>
+                        </figure>
+                    </div>
+                {% endfor %}
             </div>
         {% endif %}
         <p>

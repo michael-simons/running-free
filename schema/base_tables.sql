@@ -185,3 +185,16 @@ CREATE TABLE IF NOT EXISTS health_metrics (
   lowest_spo2_value  UTINYINT
 );
 
+
+--
+-- Shoes
+--
+CREATE SEQUENCE IF NOT EXISTS shoe_id;
+CREATE TABLE IF NOT EXISTS shoes (
+  id                        INTEGER PRIMARY KEY DEFAULT(nextval('shoe_id')),
+  make                      VARCHAR(128) NOT NULL,
+  model                     VARCHAR(256) NOT NULL,
+  bought_on                 DATE NOT NULL,
+  decommissioned_on         DATE,
+  picture                   STRUCT(filename VARCHAR(32), last_run BOOLEAN, milage INTEGER)
+);

@@ -307,3 +307,11 @@ CREATE OR REPLACE VIEW v_health_by_age AS (
   )
   ORDER BY year, chronological_age
 );
+
+
+--
+-- SHOES
+--
+CREATE OR REPLACE VIEW v_shoes AS
+SELECT make || ' ' || model AS name, * EXCLUDE(make, model)
+FROM shoes ORDER BY bought_on, decommissioned_on;
