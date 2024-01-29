@@ -95,7 +95,7 @@ CREATE OR REPLACE VIEW v_ytd_summary AS (
   ),
   sum_of_assorted_trips AS (
     SELECT date_trunc('month', covered_on) AS month,
-           sum(distance) AS value
+           coalesce(sum(distance),      0) AS value
     FROM assorted_trips
     WHERE month BETWEEN date_trunc('year', current_date()) AND date_trunc('month', current_date())
     GROUP BY ROLLUP (month)
