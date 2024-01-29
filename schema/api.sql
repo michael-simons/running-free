@@ -314,4 +314,6 @@ CREATE OR REPLACE VIEW v_health_by_age AS (
 --
 CREATE OR REPLACE VIEW v_shoes AS
 SELECT make || ' ' || model AS name, * EXCLUDE(make, model)
-FROM shoes ORDER BY bought_on, decommissioned_on;
+FROM shoes
+WHERE picture IS NOT NULL
+ORDER BY first_run_on, last_run_on;
