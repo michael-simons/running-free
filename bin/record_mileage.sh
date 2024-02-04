@@ -7,6 +7,10 @@ DB="$(pwd)/$1"
 BIKE="$2"
 MILEAGE="$3"
 
+case $MILEAGE in
+  ''|*[!0-9.]*) echo "invalid mileage '$MILEAGE'"; exit 1 ;;
+esac
+
 duckdb "$DB" -s "
   WITH hlp AS (
     SELECT max(recorded_on) + INTERVAL 1 MONTH AS recorded_on, m.bike_id, last(amount) AS last_amount
