@@ -101,13 +101,15 @@ CREATE OR REPLACE VIEW v_ytd_summary AS (
     GROUP BY ROLLUP (month)
   ),
   summary AS (
-    SELECT max(m.month)                                                                 AS last_recording,
-           arg_min(m.month, m.value + coalesce(t.value, 0)) FILTER (WHERE m.value <> 0) AS worst_month,
-           min(m.value + coalesce(t.value, 0)) FILTER (WHERE m.value <> 0)              AS worst_month_value,
-           arg_max(m.month, m.value + coalesce(t.value, 0))                             AS best_month,
-           max(m.value + coalesce(t.value, 0))                                          AS best_month_value
-    FROM sum_of_milages m LEFT OUTER JOIN sum_of_assorted_trips t USING (month)
-    WHERE m.month IS NOT NULL
+    SELECT max(d.range)::date                                                  AS last_recording,
+           arg_min(d.range, coalesce(m.value, 0) + coalesce(t.value, 0))::date AS worst_month,
+           min(coalesce(m.value, 0) + coalesce(t.value, 0))                    AS worst_month_value,
+           arg_max(d.range, coalesce(m.value, 0) + coalesce(t.value, 0))::date AS best_month,
+           max(coalesce(m.value, 0) + coalesce(t.value, 0))                    AS best_month_value
+    FROM range(date_trunc('year', current_date()), date_trunc('year', current_date()) + interval 12 month, interval 1 month) d
+      LEFT OUTER JOIN sum_of_milages m ON m.month = d.range
+      LEFT OUTER JOIN sum_of_assorted_trips t ON t.month = d.range
+    WHERE m.value IS NOT NULL OR t.value IS NOT NULL
   ),
   sum_of_milages_by_bike AS (
     SELECT bike,
@@ -118,7 +120,7 @@ CREATE OR REPLACE VIEW v_ytd_summary AS (
   )
   SELECT s.*,
          (SELECT arg_max(bike, value) FROM sum_of_milages_by_bike)                                           AS preferred_bike,
-         m.value + t.value                                                                                   AS total,
+         coalesce(m.value, 0) + coalesce(t.value, 0)                                                         AS total,
          total / date_diff('month', date_trunc('year', current_date()), s.last_recording + interval 1 month) AS avg_per_month
   FROM sum_of_milages m,
        sum_of_assorted_trips t,
