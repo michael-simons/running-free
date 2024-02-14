@@ -187,8 +187,8 @@ CREATE OR REPLACE VIEW v_reoccurring_events AS (
   SELECT name, list({
     achieved_at: achieved_at,
     distance: distance,
-    time: lpad(duration//3600, 2, '0') || ':' || lpad((duration%3600)//60, 2, '0') || ':' || lpad(duration%3600%60, 2, '0'),
-    pace: cast(floor(duration/distance/60) AS int) || ':' || lpad(round(duration/distance%60, 0)::int, 2, '0'),
+    time: lpad(cast(duration//3600 AS VARCHAR), 2, '0') || ':' || lpad(cast((duration%3600)//60 AS VARCHAR), 2, '0') || ':' || lpad(cast(duration%3600%60 AS VARCHAR), 2, '0'),
+    pace: cast(floor(duration/distance/60) AS int) || ':' || lpad(cast(round(duration/distance%60, 0)::int AS VARCHAR), 2, '0'),
     certificate: if(certificate IS NOT NULL, strftime(achieved_at, '%Y-%m-%d') || ' ' || name || '.' || certificate, null)
   } ORDER BY achieved_at)
   FROM events e JOIN results r ON r.event_id = e.id
@@ -205,8 +205,8 @@ CREATE OR REPLACE VIEW v_one_time_only_events AS (
   SELECT name,
          achieved_at,
          distance,
-         lpad(duration//3600, 2, '0') || ':' || lpad((duration%3600)//60, 2, '0') || ':' || lpad(duration%3600%60, 2, '0') AS time,
-         cast(floor(duration/distance/60) AS int) || ':' || lpad(round(duration/distance%60, 0)::int, 2, '0') AS pace,
+         lpad(cast(duration//3600 AS VARCHAR), 2, '0') || ':' || lpad(cast((duration%3600)//60 AS VARCHAR), 2, '0') || ':' || lpad(cast(duration%3600%60 AS VARCHAR), 2, '0') AS time,
+         cast(floor(duration/distance/60) AS int) || ':' || lpad(cast(round(duration/distance%60, 0)::int AS VARCHAR), 2, '0') AS pace,
          if(certificate IS NOT NULL, strftime(achieved_at, '%Y-%m-%d') || ' ' || name || '.' || certificate, null) AS certificate
   FROM events e JOIN results r ON r.event_id = e.id
   WHERE one_time_only
@@ -239,7 +239,7 @@ CREATE OR REPLACE VIEW v_mileage_by_bike_and_year AS (
 --
 CREATE OR REPLACE VIEW v_pace_percentiles_per_distance_and_year AS (
   SELECT value AS distance, year,
-         list_transform(percentiles, pace -> cast(floor(pace/60) AS int) || ':' || lpad(round(pace%60, 0)::int, 2, '0')) AS percentiles
+         list_transform(percentiles, pace -> cast(floor(pace/60) AS int) || ':' || lpad(cast(round(pace%60, 0)::int AS VARCHAR), 2, '0')) AS percentiles
   FROM v$_pace_percentiles_per_distance_and_year
 );
 
