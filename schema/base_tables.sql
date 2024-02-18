@@ -199,3 +199,4 @@ CREATE TABLE IF NOT EXISTS shoes (
   last_milage        INTEGER,
   picture            STRUCT(filename VARCHAR(32), last_run BOOLEAN, milage INTEGER)
 );
+ALTER TABLE shoes ADD COLUMN IF NOT EXISTS hide BOOLEAN DEFAULT false;

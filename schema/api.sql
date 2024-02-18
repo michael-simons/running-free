@@ -318,4 +318,5 @@ CREATE OR REPLACE VIEW v_shoes AS
 SELECT make || ' ' || model AS name, * EXCLUDE(make, model)
 FROM shoes
 WHERE picture IS NOT NULL
+ AND NOT hide
 ORDER BY first_run_on, last_run_on;
