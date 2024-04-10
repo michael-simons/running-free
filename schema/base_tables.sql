@@ -200,3 +200,12 @@ CREATE TABLE IF NOT EXISTS shoes (
   picture            STRUCT(filename VARCHAR(32), last_run BOOLEAN, milage INTEGER)
 );
 ALTER TABLE shoes ADD COLUMN IF NOT EXISTS hide BOOLEAN DEFAULT false;
+
+
+--
+-- Cooper tests
+--
+CREATE TABLE IF NOT EXISTS cooper_test_results (
+  taken_on           DATE PRIMARY KEY,
+  result             DECIMAL(9, 3) NOT NULL
+)
