@@ -208,4 +208,4 @@ ALTER TABLE shoes ADD COLUMN IF NOT EXISTS hide BOOLEAN DEFAULT false;
 CREATE TABLE IF NOT EXISTS cooper_test_results (
   taken_on           DATE PRIMARY KEY,
   result             DECIMAL(9, 3) NOT NULL
-)
+);
