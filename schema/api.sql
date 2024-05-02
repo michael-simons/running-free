@@ -32,7 +32,7 @@ CREATE OR REPLACE VIEW v_bikes AS (
     SELECT bike_id, sum(amount) AS value FROM lent_milages GROUP BY ALL
   ), last_milage AS (
      SELECT bike_id, last(amount) AS value
-     FROM milages GROUP BY bike_id ORDER BY last(recorded_on) ASC
+     FROM milages GROUP BY bike_id ORDER BY last(recorded_on)
   )
   SELECT bikes.*,
          coalesce(last_milage.value, 0) + coalesce(lent.value, 0) AS last_milage,
@@ -41,6 +41,7 @@ CREATE OR REPLACE VIEW v_bikes AS (
   LEFT OUTER JOIN years ON years.bike = bikes.name
   LEFT OUTER JOIN lent ON lent.bike_id = bikes.id
   LEFT OUTER JOIN last_milage ON last_milage.bike_id = bikes.id
+  WHERE NOT hide
   ORDER BY last_milage desc, bought_on, decommissioned_on, name
 );
 

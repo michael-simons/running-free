@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS bikes (
   miscellaneous       BOOLEAN NOT NULL DEFAULT FALSE,
   CONSTRAINT bikes_unique_name UNIQUE(name)
 );
-
+ALTER TABLE bikes ADD COLUMN IF NOT EXISTS hide BOOLEAN DEFAULT false;
 
 --
 -- Stores the total km travelled with any given bike once per month.
