@@ -189,7 +189,7 @@ CREATE OR REPLACE VIEW v_reoccurring_events AS (
     achieved_at: achieved_at,
     distance: distance,
     time: lpad(cast(duration//3600 AS VARCHAR), 2, '0') || ':' || lpad(cast((duration%3600)//60 AS VARCHAR), 2, '0') || ':' || lpad(cast(duration%3600%60 AS VARCHAR), 2, '0'),
-    pace: cast(floor(duration/distance/60) AS int) || ':' || lpad(cast(round(duration/distance%60, 0)::int AS VARCHAR), 2, '0'),
+    pace: if(distance IS NOT NULL, cast(floor(duration/distance/60) AS int) || ':' || lpad(cast(round(duration/distance%60, 0)::int AS VARCHAR), 2, '0'), null),
     certificate: if(certificate IS NOT NULL, strftime(achieved_at, '%Y-%m-%d') || ' ' || name || '.' || certificate, null)
   } ORDER BY achieved_at)
   FROM events e JOIN results r ON r.event_id = e.id
@@ -207,7 +207,7 @@ CREATE OR REPLACE VIEW v_one_time_only_events AS (
          achieved_at,
          distance,
          lpad(cast(duration//3600 AS VARCHAR), 2, '0') || ':' || lpad(cast((duration%3600)//60 AS VARCHAR), 2, '0') || ':' || lpad(cast(duration%3600%60 AS VARCHAR), 2, '0') AS time,
-         cast(floor(duration/distance/60) AS int) || ':' || lpad(cast(round(duration/distance%60, 0)::int AS VARCHAR), 2, '0') AS pace,
+         if(distance IS NOT NULL, cast(floor(duration/distance/60) AS int) || ':' || lpad(cast(round(duration/distance%60, 0)::int AS VARCHAR), 2, '0'), null) AS pace,
          if(certificate IS NOT NULL, strftime(achieved_at, '%Y-%m-%d') || ' ' || name || '.' || certificate, null) AS certificate
   FROM events e JOIN results r ON r.event_id = e.id
   WHERE one_time_only

@@ -26,7 +26,7 @@
                                         <td class="tab-nums">{{ event['achieved_at']|fmt_date }}</td>
                                         <td>{{ event['name'] }}</td>
                                         <td class="tab-nums">{{ event['time'] }}</td>
-                                        <td class="tab-nums">{{ event['pace'] }}</td>
+                                        <td class="tab-nums">{{ event['pace'] if event['pace'] is not none }}</td>
                                         <td class="text-center">
                                             {% if assets_present and event['certificate'] %}
                                                 <a href="{{ url_for('static', filename='assets/certificates/' ~ event['certificate']) }}"><i
@@ -46,6 +46,11 @@
                 was incredible hot there), then on the Monschau Marathon (I was so happy during the whole race) and then
                 in Antwerp, where I beat my aim of 1:30 by nearly 3 minutes. Luckily I didn't get the memo that one
                 isn't supposed to become faster at old age 😉.
+            </p>
+            <p>
+                In 2024 I did my first Triathlon, and it was a blast: 500m 🏊‍♂️ in 8:41, 21km 🚴‍♂️ in 36:36 and 5km
+                🏃‍♂️ in 22:15. I never thought I would be doing such a thing, neither with my terrible eye-sight nor
+                with regard to running 6 years prior.
             </p>
         </div>
         <nav class="nav">
@@ -74,7 +79,7 @@
                                         <tr>
                                             <td>{{ result['distance']|fmt_double }}</td>
                                             <td class="tab-nums">{{ result['time'] }}</td>
-                                            <td class="tab-nums">{{ result['pace'] }}</td>
+                                            <td class="tab-nums">{{ result['pace'] if event['pace'] is not none }}</td>
                                             <td class="tab-nums">{{ result['achieved_at']|fmt_date }}</td>
                                             <td class="text-center">
                                                 {% if assets_present and result['certificate'] %}
@@ -95,8 +100,9 @@
             <p>
                 Yes, the Aachener Sylvesterlauf used to be called <em>Sylvesterlauf</em> until 2022, it's not a typo. In
                 2022, they changed the course and the name, and now it's Silvesterlauf.
-                <br />
-                I used the net-times in the above tables if available. I'm pretty sure that <a href="https://time-and-voice.com">
+                <br/>
+                I used the net-times in the above tables if available. I'm pretty sure that <a
+                    href="https://time-and-voice.com">
                 Time and Voice</a> has mixed up gross and net for Rursee 2021, though.
             </p>
             <p>

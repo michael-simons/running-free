@@ -65,7 +65,7 @@ CREATE SEQUENCE IF NOT EXISTS events_id;
 CREATE TABLE IF NOT EXISTS events (
   id                  INTEGER PRIMARY KEY DEFAULT(nextval('events_id')),
   name VARCHAR(255)   NOT NULL,
-  type                VARCHAR(32) CHECK (type IN ('cycling', 'running')) NOT NULL,
+  type                VARCHAR(32) CHECK (type IN ('cycling', 'running', 'swimming', 'Triathlon')) NOT NULL,
   one_time_only       BOOLEAN NOT NULL,
   CONSTRAINT events_unique_name UNIQUE(name)
 );
@@ -125,6 +125,11 @@ ALTER TABLE results ALTER COLUMN certificate TYPE VARCHAR(8);
 ALTER TABLE results ALTER COLUMN certificate SET DEFAULT NULL;
 UPDATE results SET certificate = null WHERE certificate = 'false';
 UPDATE results SET certificate = 'pdf' WHERE certificate = 'true';
+
+--
+-- Allow results without overall distance
+--
+ALTER TABLE results ALTER COLUMN distance DROP NOT NULL;
 
 
 --
