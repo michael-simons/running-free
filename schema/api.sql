@@ -194,6 +194,7 @@ CREATE OR REPLACE VIEW v_reoccurring_events AS (
   } ORDER BY achieved_at)
   FROM events e JOIN results r ON r.event_id = e.id
   WHERE NOT one_time_only
+    AND NOT hide
   GROUP BY ALL
   ORDER BY name
 );
@@ -211,6 +212,7 @@ CREATE OR REPLACE VIEW v_one_time_only_events AS (
          if(certificate IS NOT NULL, strftime(achieved_at, '%Y-%m-%d') || ' ' || name || '.' || certificate, null) AS certificate
   FROM events e JOIN results r ON r.event_id = e.id
   WHERE one_time_only
+    AND NOT hide
   GROUP BY ALL
   ORDER BY achieved_at, name
 );

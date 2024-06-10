@@ -131,6 +131,7 @@ UPDATE results SET certificate = 'pdf' WHERE certificate = 'true';
 --
 ALTER TABLE results ALTER COLUMN distance DROP NOT NULL;
 
+ALTER TABLE events ADD COLUMN IF NOT EXISTS hide BOOLEAN DEFAULT false;
 
 --
 -- Maintenance
