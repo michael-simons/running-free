@@ -16,7 +16,7 @@ GARMIN_USER=$3
 TARGET="$(pwd)/$4/f.csv"
 TARGET_DIR="$(pwd)/$4"
 
-START_DATE=$(duckdb "$DB" -noheader -list -readonly -c "select max(started_on::date) + INTERVAL 1 day FROM garmin_activities WHERE gpx_available IS TRUE")
+START_DATE=$(duckdb "$DB" -noheader -list -readonly -c "select cast(max(started_on::date) + INTERVAL 1 day AS date) FROM garmin_activities WHERE gpx_available IS TRUE")
 
 garmin-babel --start-date="$START_DATE" "$GARMIN_ARCHIVE" dump-activities --user-name="$GARMIN_USER" --sport-type=RUNNING --min-distance=10 --download=gpx "$TARGET"
 garmin-babel --start-date="$START_DATE" "$GARMIN_ARCHIVE" dump-activities --user-name="$GARMIN_USER" --sport-type=RUNNING --min-distance=10 --download=fit "$TARGET"
