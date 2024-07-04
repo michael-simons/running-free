@@ -215,3 +215,12 @@ CREATE TABLE IF NOT EXISTS cooper_test_results (
   taken_on           DATE PRIMARY KEY,
   result             DECIMAL(9, 3) NOT NULL
 );
+
+
+--
+-- Profil data
+--
+CREATE TABLE IF NOT EXISTS user_profile (
+  name  VARCHAR(128) PRIMARY KEY,
+  value VARCHAR(512) NOT NULL
+);
