@@ -187,6 +187,7 @@ CREATE OR REPLACE VIEW v_monthly_average AS (
 CREATE OR REPLACE VIEW v_reoccurring_events AS (
   SELECT name, list({
     achieved_at: achieved_at,
+    age_group: f_dlo_agegroup(achieved_at),
     distance: distance,
     time: lpad(cast(duration//3600 AS VARCHAR), 2, '0') || ':' || lpad(cast((duration%3600)//60 AS VARCHAR), 2, '0') || ':' || lpad(cast(duration%3600%60 AS VARCHAR), 2, '0'),
     pace: if(distance IS NOT NULL, cast(floor(duration/distance/60) AS int) || ':' || lpad(cast(round(duration/distance%60, 0)::int AS VARCHAR), 2, '0'), null),
@@ -206,6 +207,7 @@ CREATE OR REPLACE VIEW v_reoccurring_events AS (
 CREATE OR REPLACE VIEW v_one_time_only_events AS (
   SELECT name,
          achieved_at,
+         f_dlo_agegroup(achieved_at) AS age_group,
          distance,
          lpad(cast(duration//3600 AS VARCHAR), 2, '0') || ':' || lpad(cast((duration%3600)//60 AS VARCHAR), 2, '0') || ':' || lpad(cast(duration%3600%60 AS VARCHAR), 2, '0') AS time,
          if(distance IS NOT NULL, cast(floor(duration/distance/60) AS int) || ':' || lpad(cast(round(duration/distance%60, 0)::int AS VARCHAR), 2, '0'), null) AS pace,
