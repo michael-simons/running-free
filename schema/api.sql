@@ -297,7 +297,7 @@ CREATE OR REPLACE VIEW v_specs AS (
 --
 CREATE OR REPLACE VIEW v_health_by_age AS (
   SELECT year(ref_date) AS year,
-         ifnull(chronological_age, year - 1979) AS chronological_age,
+         list(distinct ifnull(chronological_age, date_sub('year', dob.value::date, ref_date))) AS chronological_age,
          cast(round(avg(biological_age) FILTER (WHERE biological_age IS NOT NULL)) AS int) AS avg_biological_age,
          cast(round(avg(resting_heart_rate) FILTER (WHERE resting_heart_rate IS NOT NULL)) AS int) AS avg_resting_heart_rate,
          round(avg(weight) FILTER (WHERE weight IS NOT NULL), 2) AS avg_weight,
@@ -306,13 +306,14 @@ CREATE OR REPLACE VIEW v_health_by_age AS (
          round(avg(vo2max_biometric) FILTER (WHERE vo2max_biometric IS NOT NULL), 2) AS avg_vo2max,
          round(avg(vo2max_running) FILTER (WHERE vo2max_running IS NOT NULL), 2) AS avg_vo2max_running,
          round(avg(vo2max_cycling) FILTER (WHERE vo2max_cycling IS NOT NULL), 2) AS avg_vo2max_cycling
-  FROM health_metrics
+  FROM health_metrics, user_profile dob
+  WHERE dob.name = 'date_of_birth'
   GROUP BY ALL
   HAVING (
     avg_biological_age NOT NULL OR avg_resting_heart_rate NOT NULL OR
     avg_weight NOT NULL OR avg_body_fat NOT NULL
   )
-  ORDER BY year, chronological_age
+  ORDER BY year
 );
 
 
