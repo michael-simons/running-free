@@ -23,3 +23,17 @@ CREATE OR REPLACE FUNCTION f_dlo_agegroup(ref_date) AS (
     END
   FROM age_in_years a, gender g
 );
+
+--
+-- Computes the pace for a given distance in meters over a duration in seconds
+--
+CREATE OR REPLACE FUNCTION f_pace(distance, duration) AS (
+  SELECT if(distance IS NOT NULL, cast(floor(duration/distance/60) AS int) || ':' || lpad(cast(round(duration/distance%60, 0)::int AS VARCHAR), 2, '0'), null)
+);
+
+--
+-- Formats a duration in seconds as time hh:mm:ss
+--
+CREATE OR REPLACE FUNCTION f_format_duration(duration) AS (
+  SELECT lpad(cast(duration//3600 AS VARCHAR), 2, '0') || ':' || lpad(cast((duration%3600)//60 AS VARCHAR), 2, '0') || ':' || lpad(cast(duration%3600%60 AS VARCHAR), 2, '0')
+);
