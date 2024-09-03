@@ -112,6 +112,10 @@ CREATE TABLE IF NOT EXISTS garmin_activities (
 --
 ALTER TABLE garmin_activities ADD COLUMN IF NOT EXISTS gpx_available BOOLEAN DEFAULT false;
 
+--
+-- Add the device id
+--
+ALTER TABLE garmin_activities ADD COLUMN IF NOT EXISTS device_id BIGINT;
 
 --
 -- Add a certificate per result
@@ -223,4 +227,15 @@ CREATE TABLE IF NOT EXISTS cooper_test_results (
 CREATE TABLE IF NOT EXISTS user_profile (
   name  VARCHAR(128) PRIMARY KEY,
   value VARCHAR(512) NOT NULL
+);
+
+
+--
+-- Garmin devices
+--
+CREATE TABLE IF NOT EXISTS garmin_devices (
+  device_id                     BIGINT PRIMARY KEY,
+  product_name                  VARCHAR(256) NOT NULL,
+  serial_number                 VARCHAR(16) NOT NULL,
+  part_number                   VARCHAR(32) NOT NULL
 );

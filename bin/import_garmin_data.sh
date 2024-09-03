@@ -19,7 +19,7 @@ duckdb "$DB" -s "
     SELECT * EXCLUDE(avg_speed, max_speed) REPLACE(coalesce(name, 'n/a') AS name)
     FROM read_csv_auto('/dev/stdin')
   )
-  ON CONFLICT DO NOTHING
+  ON CONFLICT DO UPDATE SET device_id = CASE WHEN excluded.device_id = 0 THEN null ELSE device_id END
 "
 
 garmin-export-fitness-metrics "$GARMIN_ARCHIVE" |
