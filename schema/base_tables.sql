@@ -239,3 +239,8 @@ CREATE TABLE IF NOT EXISTS garmin_devices (
   serial_number                 VARCHAR(16) NOT NULL,
   part_number                   VARCHAR(32) NOT NULL
 );
+
+--
+-- Serial number for older stuff not known
+--
+ALTER TABLE garmin_devices ALTER COLUMN serial_number DROP NOT NULL;
