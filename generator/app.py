@@ -19,6 +19,17 @@ def site(database: str):
 
     now = datetime.now()
 
+    def fmt_sport(sport):
+        match sport:
+            case "cycling":
+                return "🚴‍♂️"
+            case "running":
+                return "🏃‍♂️"
+            case "swimming":
+                return "🏊‍♂️"
+            case _:
+                return "??"
+
     app = flask.Flask(__name__, static_url_path="/")
     app.jinja_options["autoescape"] = lambda _: True
     app.jinja_options['extensions'] = ['jinja_markdown.MarkdownExtension']
@@ -28,7 +39,8 @@ def site(database: str):
         'fmt_time': lambda v: v.strftime('%H:%M'),
         'fmt_datetime': lambda v: v.strftime('%Y-%m-%dT%H:%M:%S'),
         'fmt_double': lambda v: format(v, '.2f'),
-        'fmt_int': lambda v: format(v, '.0f')
+        'fmt_int': lambda v: format(v, '.0f'),
+        'fmt_sport': fmt_sport
     })
     app.jinja_env.tests.update({
         'nat': lambda v: v is pandas.NaT
@@ -49,9 +61,11 @@ def site(database: str):
 
     @app.route('/')
     def index():
+        max_year = flask.current_app.jinja_env.globals.get('max_year')
         with db.cursor() as con:
             summary = con.execute('FROM v_summary').df()
-        return flask.render_template('index.html.jinja2', summary=summary)
+            by_year_and_sport = con.execute('FROM v_distances_by_year_and_sport WHERE year = ?', [max_year]).df()
+        return flask.render_template('index.html.jinja2', summary=summary, by_year_and_sport=by_year_and_sport)
 
     @app.route("/mileage/")
     def mileage():

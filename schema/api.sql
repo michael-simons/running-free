@@ -326,3 +326,25 @@ FROM shoes
 WHERE picture IS NOT NULL
  AND NOT hide
 ORDER BY first_run_on, last_run_on;
+
+
+--
+-- Summarized distances by year and sport
+--
+CREATE OR REPLACE VIEW v_distances_by_year_and_sport AS
+WITH sports AS (
+  SELECT
+    started_on,
+    distance,
+    CASE
+      WHEN activity_type IN ('gravel_cycling', 'mountain_biking', 'cycling', 'road_biking') THEN 'cycling'
+      WHEN activity_type IN ('track_running', 'running', 'treadmill_running') THEN 'running'
+      WHEN activity_type IN ('lap_swimming', 'open_water_swimming', 'swimming') THEN 'swimming'
+    END AS sport
+  FROM garmin_activities
+  WHERE sport IS NOT NULL
+)
+SELECT year(started_on) AS year, sport, round(sum(distance)) AS value
+FROM sports
+GROUP BY ALL
+ORDER BY ALL

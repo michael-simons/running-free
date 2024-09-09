@@ -28,6 +28,17 @@
                 <strong>{{ _summary['best_month_value']|fmt_int }}km</strong>.
             </p>
             {% endfor %}
+            {% if not by_year_and_sport.empty %}
+                <p>
+                    The overall values in <strong>{{ max_year }}</strong> produced from the current state of my Garmin activities archive are:
+                    {%- for distance in by_year_and_sport.itertuples() %}
+                            {%- if not loop.first and not loop.last %},
+                            {%- elif not loop.first %} and
+                            {%- endif %}
+                            <strong>{{ distance['value']|fmt_int }}km</strong> {{ distance['sport']|fmt_sport }}
+                    {%- endfor %}.
+                </p>
+            {% endif %}
             <p>
                 I track my mileage on bikes with this site, together with some integrations to my Garmin Archive
                 (Checkout <a href="https://github.com/michael-simons/garmin-babel">Garmin Babel</a> if you are
@@ -47,7 +58,7 @@
                 version.
             </p>
             <p>
-                Standing on the shoulders of giants — I'm very happy to use the following technologies and framework
+                Standing on the shoulders of giants—I'm very happy to use the following technologies and framework
                 amongst others to build this application:
             </p>
             <p>
