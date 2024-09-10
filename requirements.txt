@@ -22,3 +22,5 @@ six==1.16.0
 threadpoolctl==3.2.0
 tzdata==2023.3
 Werkzeug==2.3.8
+staticmap==0.5.7
+gpxpy==1.6.2

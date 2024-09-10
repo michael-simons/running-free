@@ -8,6 +8,7 @@ Veloviewer Stats
 generator/static/assets
 generator/static/gallery
 generator/templates/gear
+generator/tracks
 backup
 import
 Garmin

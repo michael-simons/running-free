@@ -5,11 +5,13 @@ from numpy import nan
 from pathlib import Path
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
+from staticmap import Line, StaticMap
 
 import click
 import duckdb
 import flask
 import functools
+import gpxpy
 import jinja2.exceptions
 import pandas
 
@@ -50,6 +52,7 @@ def site(database: str):
     assets_dir = root / app.static_folder / "assets"
     gallery_dir = root / app.static_folder / "gallery"
     gear_dir = root / app.template_folder / "gear"
+    track_dir = root / "tracks"
 
     app.jinja_env.globals.update({
         'tz': 'Europe/Berlin',
@@ -153,6 +156,30 @@ def site(database: str):
     @app.route("/history/")
     def history():
         return flask.render_template('history.html.jinja2')
+
+    @app.route("/map/<activity_id>.png")
+    def map(activity_id: int):
+
+        gpx_file = track_dir.joinpath(f'{activity_id}.gpx')
+        if not gpx_file.is_file():
+            flask.abort(404)
+
+        filename = track_dir.joinpath(f'{activity_id}.png')
+        if not filename.is_file():
+            map_data = []
+            with gpx_file.open("r") as handle:
+                gpx = gpxpy.parse(handle)
+                for track in gpx.tracks:
+                    for segment in track.segments:
+                        for point in segment.points:
+                            map_data.append([point.longitude, point.latitude])
+            line = Line(map_data, '#3388FF', 4)
+            m = StaticMap(640, 480, 10)
+            m.add_line(line)
+            image = m.render()
+            image.save(filename)
+
+        return flask.send_file(filename, mimetype='image/png')
 
     return app
 

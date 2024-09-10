@@ -11,6 +11,7 @@
         <div class="col-12">
             <div class="row">
                 <div class="col-xl-8 col-lg-12">
+                    {% set render_map_column = assets_present and one_time_only_events["activity_id"].any(skipna=False) %}
                     <div class="table-responsive">
                         <table class="table table-striped table-bordered table-sm">
                             <thead>
@@ -19,14 +20,14 @@
                                     <th>AK</th>
                                     <th>Event</th>
                                     <th>Time</th>
-                                    <th colspan="2">Pace</th>
+                                    <th colspan="{{ 3 if render_map_column else 2 }}">Pace</th>
                                 </tr>
                             </thead>
                             <tbody class="table-group-divider">
                                 {% for event in one_time_only_events.itertuples() %}
                                     <tr>
                                         <td class="tab-nums">{{ event['achieved_at']|fmt_date }}</td>
-                                        <td>{{ event['age_group']}}</td>
+                                        <td>{{ event['age_group'] }}</td>
                                         <td>{{ event['name'] }}</td>
                                         <td class="tab-nums">{{ event['time'] }}</td>
                                         <td class="tab-nums">{{ event['pace'] if event['pace'] is not none }}</td>
@@ -36,6 +37,21 @@
                                                         class="bi-patch-check"></i></a>
                                             {% endif %}
                                         </td>
+                                        {% if render_map_column %}
+                                            <td class="text-center">
+                                                {% if event['activity_id'] %}
+                                                    {% set activity_id = event['activity_id']|fmt_int %}
+                                                    <div style="display: none">
+                                                        <img src="{{ url_for('map', activity_id=activity_id) }}"
+                                                             id="{{ activity_id }}" alt="a"/>
+                                                    </div>
+                                                    <a href="#" tabindex="0" data-bs-toggle="popover"
+                                                       data-bs-title="{{ event['name'] }}" data-bs-html="true"
+                                                       data-ms-activity-id="{{ activity_id }}"><i
+                                                            class="bi-map"></i></a>
+                                                {% endif %}
+                                            </td>
+                                        {% endif %}
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -68,6 +84,7 @@
                 {% for event in reoccuring_events %}
                     <div class="col-xl-4 col-lg-6 col-sm-12">
                         <h3>{{ event[0] }}</h3>
+                        {% set render_map_column = assets_present and event[1]|map(attribute='activity_id')|select|first %}
                         <div class="table-responsive">
                             <table class="table table-striped table-bordered table-sm">
                                 <thead>
@@ -76,14 +93,14 @@
                                         <th>AK</th>
                                         <th>Distance</th>
                                         <th>Time</th>
-                                        <th colspan="2">Pace</th>
+                                        <th colspan="{{ 3 if render_map_column else 2 }}">Pace</th>
                                     </tr>
                                 </thead>
                                 <tbody class="table-group-divider">
                                     {% for result in event[1] %}
                                         <tr>
                                             <td class="tab-nums">{{ result['achieved_at']|fmt_date }}</td>
-                                            <td>{{ result['age_group']}}</td>
+                                            <td>{{ result['age_group'] }}</td>
                                             <td class="tab-nums">{{ result['distance']|fmt_double }}</td>
                                             <td class="tab-nums">{{ result['time'] }}</td>
                                             <td class="tab-nums">{{ result['pace'] if event['pace'] is not none }}</td>
@@ -93,6 +110,21 @@
                                                             class="bi-patch-check"></i></a>
                                                 {% endif %}
                                             </td>
+                                            {% if render_map_column %}
+                                                <td class="text-center">
+                                                    {% if result['activity_id'] %}
+                                                        {% set activity_id = result['activity_id']|fmt_int %}
+                                                        <div style="display: none">
+                                                            <img src="{{ url_for('map', activity_id=activity_id) }}"
+                                                                 id="{{ activity_id }}" alt="a"/>
+                                                        </div>
+                                                        <a href="#" tabindex="0" data-bs-toggle="popover"
+                                                           data-bs-title="{{ event[0] }}" data-bs-html="true"
+                                                           data-ms-activity-id="{{ activity_id }}"><i
+                                                                class="bi-map"></i></a>
+                                                    {% endif %}
+                                                </td>
+                                            {% endif %}
                                         </tr>
                                     {% endfor %}
                                 </tbody>

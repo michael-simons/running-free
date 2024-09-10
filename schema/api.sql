@@ -185,19 +185,21 @@ CREATE OR REPLACE VIEW v_monthly_average AS (
 -- Reoccurring events and their results. Results will be a structured list object per row.
 --
 CREATE OR REPLACE VIEW v_reoccurring_events AS (
-  SELECT name, list({
+  SELECT e.name, list({
     achieved_at: achieved_at,
     age_group: f_dlo_agegroup(achieved_at),
-    distance: distance,
-    time: f_format_duration(duration),
-    pace: f_pace(distance, duration),
-    certificate: if(certificate IS NOT NULL, strftime(achieved_at, '%Y-%m-%d') || ' ' || name || '.' || certificate, null)
+    distance: r.distance,
+    time: f_format_duration(r.duration),
+    pace: f_pace(r.distance, r.duration),
+    certificate: if(certificate IS NOT NULL, strftime(achieved_at, '%Y-%m-%d') || ' ' || e.name || '.' || certificate, null),
+    activity_id: g.garmin_id
   } ORDER BY achieved_at)
   FROM events e JOIN results r ON r.event_id = e.id
+  LEFT OUTER JOIN garmin_activities g ON g.garmin_id = r.activity_id AND g.gpx_available IS true
   WHERE NOT one_time_only
     AND NOT hide
   GROUP BY ALL
-  ORDER BY name
+  ORDER BY e.name
 );
 
 
@@ -205,18 +207,20 @@ CREATE OR REPLACE VIEW v_reoccurring_events AS (
 -- One time only events and the explicit result therein.
 --
 CREATE OR REPLACE VIEW v_one_time_only_events AS (
-  SELECT name,
+  SELECT e.name,
          achieved_at,
-         f_dlo_agegroup(achieved_at) AS age_group,
-         distance,
-         f_format_duration(duration) AS time,
-         f_pace(distance, duration)  AS pace,
-         if(certificate IS NOT NULL, strftime(achieved_at, '%Y-%m-%d') || ' ' || name || '.' || certificate, null) AS certificate
+         f_dlo_agegroup(achieved_at)    AS age_group,
+         r.distance,
+         f_format_duration(r.duration)  AS time,
+         f_pace(r.distance, r.duration) AS pace,
+         if(certificate IS NOT NULL, strftime(achieved_at, '%Y-%m-%d') || ' ' || e.name || '.' || certificate, null) AS certificate,
+         g.garmin_id                 AS activity_id
   FROM events e JOIN results r ON r.event_id = e.id
+  LEFT OUTER JOIN garmin_activities g ON g.garmin_id = r.activity_id AND g.gpx_available IS true
   WHERE one_time_only
     AND NOT hide
   GROUP BY ALL
-  ORDER BY achieved_at, name
+  ORDER BY achieved_at, e.name
 );
 
 

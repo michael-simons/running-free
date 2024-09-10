@@ -36,6 +36,10 @@
             .figure-caption {
                 text-align: center;
             }
+
+            .popover{
+               max-width: 672px !important;
+            }
         </style>
     </head>
 
@@ -116,5 +120,17 @@
         <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
         <script src="{{ url_for('static', filename='js/chart.umd.min.js') }}"></script>
         <script src="{{ url_for('static', filename='js/chartjs-plugin-annotation.min.js') }}"></script>
+        <script>
+            const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
+            const popoverList = [...popoverTriggerList].map(trigger => {
+                trigger.dataset.bsContent = document.getElementById(trigger.dataset.msActivityId).outerHTML;
+                if (trigger instanceof HTMLAnchorElement) {
+                    trigger.onclick = function () {
+                        return false;
+                    }
+                }
+                new bootstrap.Popover(trigger, {trigger: 'focus'})
+            });
+        </script>
     </body>
 </html>
