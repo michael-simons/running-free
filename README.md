@@ -18,3 +18,12 @@ They are separated in 3 categories:
 The site generator is essentially a [Flask application](https://flask.palletsprojects.com/en/2.3.x/) which can be run with a local development server.
 The `app.py` entry-point can however be run with either `run` or `build` commands.
 The latter will freeze the site and generate static HTML files.
+
+## Bookmarks
+
+The following list is a collection of projects that might be useful in adding stuff:
+
+* https://github.com/SamR1/FitTrackee
+* https://github.com/komoot/staticmap
+* https://protomaps.com
+* https://github.com/maplibre/martin
