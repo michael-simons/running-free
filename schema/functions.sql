@@ -37,3 +37,14 @@ CREATE OR REPLACE FUNCTION f_pace(distance, duration) AS (
 CREATE OR REPLACE FUNCTION f_format_duration(duration) AS (
   SELECT lpad(cast(duration//3600 AS VARCHAR), 2, '0') || ':' || lpad(cast((duration%3600)//60 AS VARCHAR), 2, '0') || ':' || lpad(cast(duration%3600%60 AS VARCHAR), 2, '0')
 );
+
+--
+-- Unifies a Garmin activity
+--
+CREATE OR REPLACE FUNCTION f_unify_activity_type(activity_type) AS (
+  SELECT CASE
+    WHEN activity_type IN ('gravel_cycling', 'mountain_biking', 'cycling', 'road_biking') THEN 'cycling'
+    WHEN activity_type IN ('track_running', 'running', 'treadmill_running') THEN 'running'
+    WHEN activity_type IN ('lap_swimming', 'open_water_swimming', 'swimming') THEN 'swimming'
+  END
+);

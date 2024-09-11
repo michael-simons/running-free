@@ -7,6 +7,7 @@ Strava Badges
 Veloviewer Stats
 generator/static/assets
 generator/static/gallery
+!generator/misc
 generator/templates/gear
 generator/tracks
 backup

@@ -3,6 +3,7 @@ from datetime import datetime
 from flask_frozen import Freezer
 from numpy import nan
 from pathlib import Path
+from PIL import ImageDraw, ImageFont
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from staticmap import Line, StaticMap
@@ -53,6 +54,10 @@ def site(database: str):
     gallery_dir = root / app.static_folder / "gallery"
     gear_dir = root / app.template_folder / "gear"
     track_dir = root / "tracks"
+
+    # For image generation
+    font_label = ImageFont.truetype(root.joinpath("misc/FreeSans.ttf"), 36)
+    font_data = ImageFont.truetype(root.joinpath("misc/FreeSansBold.ttf"), 48)
 
     app.jinja_env.globals.update({
         'tz': 'Europe/Berlin',
@@ -174,9 +179,36 @@ def site(database: str):
                         for point in segment.points:
                             map_data.append([point.longitude, point.latitude])
             line = Line(map_data, '#3388FF', 4)
-            m = StaticMap(640, 480, 10)
+            m = StaticMap(1000, 1000, 10)
             m.add_line(line)
             image = m.render()
+
+            d = ImageDraw.Draw(image)
+
+            margin = 20
+            margin_top_label = image.height - margin - font_data.size - font_label.size * 1.25
+            margin_top_value = image.height - margin - font_data.size
+
+            with db.cursor() as con:
+                details = con.execute('FROM v_activity_details WHERE id = ?', [activity_id]).fetchone()
+                cols = [col[0] for col in con.description]
+
+                for i, label in enumerate(
+                        [details[cols.index('activity_type')].title(), "Elevation gain", "Pace", "Duration"]):
+                    d.text((margin + i * 250, margin_top_label), label, font=font_label, fill='white', stroke_width=1,
+                           stroke_fill='black')
+
+                d.text((margin, margin), details[cols.index('name')], font=font_data, fill='white', stroke_width=1,
+                       stroke_fill='black')
+                d.text((margin, margin_top_value), str(details[cols.index('distance')]) + "km", font=font_data,
+                       fill='white', stroke_width=1, stroke_fill='black')
+                d.text((margin + 250, margin_top_value), str(details[cols.index('elevation_gain')]) + "m",
+                       font=font_data, fill='white', stroke_width=1, stroke_fill='black')
+                d.text((margin + 500, margin_top_value), details[cols.index('pace')] + "/km", font=font_data,
+                       fill='white', stroke_width=1, stroke_fill='black')
+                d.text((margin + 750, margin_top_value), details[cols.index('duration')], font=font_data, fill='white',
+                       stroke_width=1, stroke_fill='black')
+
             image.save(filename)
 
         return flask.send_file(filename, mimetype='image/png')

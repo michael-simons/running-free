@@ -340,15 +340,30 @@ WITH sports AS (
   SELECT
     started_on,
     distance,
-    CASE
-      WHEN activity_type IN ('gravel_cycling', 'mountain_biking', 'cycling', 'road_biking') THEN 'cycling'
-      WHEN activity_type IN ('track_running', 'running', 'treadmill_running') THEN 'running'
-      WHEN activity_type IN ('lap_swimming', 'open_water_swimming', 'swimming') THEN 'swimming'
-    END AS sport
+    f_unify_activity_type(activity_type) AS sport
   FROM garmin_activities
   WHERE sport IS NOT NULL
 )
 SELECT year(started_on) AS year, sport, round(sum(distance)) AS value
 FROM sports
 GROUP BY ALL
-ORDER BY ALL
+ORDER BY ALL;
+
+
+--
+-- Activity details that might be connected to actual verified race results
+--
+CREATE OR REPLACE VIEW v_activity_details AS
+SELECT g.garmin_id                                AS id,
+       strftime(coalesce(r.achieved_at, g.started_on), '%Y-%m-%d') || ': ' || coalesce(e.name, g.name)
+                                                  AS name,
+       f_unify_activity_type(activity_type)       AS activity_type,
+       round(coalesce(r.distance, g.distance), 1) AS distance,
+       coalesce(f_pace(r.distance, r.duration),f_pace(g.distance, g.duration))
+                                                  AS pace,
+       coalesce(f_format_duration(r.duration), f_format_duration(g.duration))
+                                                  AS duration,
+       round(g.elevation_gain)                    AS elevation_gain
+FROM garmin_activities g
+LEFT OUTER JOIN results r ON r.activity_id = g.garmin_id
+LEFT OUTER JOIN events e ON e.id = r.event_id;
