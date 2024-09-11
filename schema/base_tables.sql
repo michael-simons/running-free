@@ -250,4 +250,4 @@ ALTER TABLE garmin_devices ALTER COLUMN serial_number DROP NOT NULL;
 --
 -- Optionally link Garmin activities to results (add foreign keys not supported, would require dropping and recreating the table)
 --
-ALTER TABLE results ADD COLUMN activity_id BIGINT NULL;
+ALTER TABLE results ADD COLUMN IF NOT EXISTS activity_id BIGINT NULL;
