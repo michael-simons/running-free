@@ -193,7 +193,7 @@ CREATE OR REPLACE VIEW v_reoccurring_events AS (
     pace: f_pace(r.distance, r.duration),
     certificate: if(certificate IS NOT NULL, strftime(achieved_at, '%Y-%m-%d') || ' ' || e.name || '.' || certificate, null),
     activity_id: g.garmin_id
-  } ORDER BY achieved_at)
+  } ORDER BY achieved_at) AS results
   FROM events e JOIN results r ON r.event_id = e.id
   LEFT OUTER JOIN garmin_activities g ON g.garmin_id = r.activity_id AND g.gpx_available IS true
   WHERE NOT one_time_only
