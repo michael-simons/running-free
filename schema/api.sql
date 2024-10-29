@@ -197,7 +197,7 @@ CREATE OR REPLACE VIEW v_reoccurring_events AS (
   FROM events e JOIN results r ON r.event_id = e.id
   LEFT OUTER JOIN garmin_activities g ON g.garmin_id = r.activity_id AND g.gpx_available IS true
   WHERE NOT one_time_only
-    AND NOT hide
+    AND (coalesce(getvariable('SHOW_ALL_REOCCURRING_EVENTS'),false) OR NOT HIDE)
   GROUP BY ALL
   ORDER BY e.name
 );
