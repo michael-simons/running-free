@@ -37,6 +37,8 @@
                             {%- endif %}
                             <strong>{{ distance['value']|fmt_int }}km</strong> {{ distance['sport']|fmt_sport }}
                     {%- endfor %}.
+                    The longest 30 minutes activity streak until <strong>{{ max_garmin[0] }}</strong> lasted
+                    <strong>{{ longest_streak[1] }}</strong> days.
                 </p>
             {% endif %}
             <p>

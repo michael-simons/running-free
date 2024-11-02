@@ -73,7 +73,10 @@ def site(database: str):
         with db.cursor() as con:
             summary = con.execute('FROM v_summary').df()
             by_year_and_sport = con.execute('FROM v_distances_by_year_and_sport WHERE year = ?', [max_year]).df()
-        return flask.render_template('index.html.jinja2', summary=summary, by_year_and_sport=by_year_and_sport)
+            longest_streak = con.execute('FROM v_longest_streak').fetchone()
+            max_garmin = con.execute('SELECT max(started_on)::date FROM garmin_activities').fetchone()
+        return flask.render_template('index.html.jinja2', summary=summary, by_year_and_sport=by_year_and_sport,
+                                     longest_streak=longest_streak, max_garmin=max_garmin)
 
     @app.route("/mileage/")
     def mileage():
