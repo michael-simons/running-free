@@ -376,26 +376,25 @@ CREATE OR REPLACE VIEW v_streaks AS
 WITH duration_per_day AS (
   SELECT date_trunc('day', started_on)                                                       AS day, 
          -- What defines a streak? More than n minutes activitiy per day
-         sum(duration) >= coalesce(getvariable('DURATION_PER_DAY'),30)*60                    AS on_streak,
+         max(duration) >= coalesce(getvariable('DURATION_PER_DAY'),30)*60                    AS on_streak,
          -- Compute the island grouping key as difference of the monotonic increasing day
          -- and the dense_rank inside the on or off streak partition
-         (day - interval (DENSE_RANK() OVER (PARTITION BY on_streak ORDER BY day) - 1) days) AS streak
+         (day - INTERVAL (dense_rank() OVER (PARTITION BY on_streak ORDER BY day) - 1) days) AS streak
   FROM garmin_activities
   GROUP BY day
-  ORDER BY day
 ), streaks AS (
-  SELECT min(day) AS start, date_diff('day', min(day), max(day)) AS duration
+  SELECT min(day) AS start, date_diff('day', start, max(day)) AS duration
   FROM duration_per_day
   WHERE on_streak
   GROUP BY streak
   HAVING duration > 1
-  ORDER BY start
 )
-SELECT * FROM streaks;
+SELECT * FROM streaks
+ORDER BY start;
 
 
 --
--- Retrieves the longes streak
+-- Retrieves the longest streak
 --
 CREATE OR REPLACE VIEW v_longest_streak AS
 SELECT unnest(max_by(v_streaks, duration)) FROM v_streaks;
