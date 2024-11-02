@@ -367,3 +367,35 @@ SELECT g.garmin_id                                AS id,
 FROM garmin_activities g
 LEFT OUTER JOIN results r ON r.activity_id = g.garmin_id
 LEFT OUTER JOIN events e ON e.id = r.event_id;
+
+
+--
+-- Computes streaks of n minutes of activity
+--
+CREATE OR REPLACE VIEW v_streaks AS
+WITH duration_per_day AS (
+  SELECT date_trunc('day', started_on)                                                       AS day, 
+         -- What defines a streak? More than n minutes activitiy per day
+         sum(duration) >= coalesce(getvariable('DURATION_PER_DAY'),30)*60                    AS on_streak,
+         -- Compute the island grouping key as difference of the monotonic increasing day
+         -- and the dense_rank inside the on or off streak partition
+         (day - interval (DENSE_RANK() OVER (PARTITION BY on_streak ORDER BY day) - 1) days) AS streak
+  FROM garmin_activities
+  GROUP BY day
+  ORDER BY day
+), streaks AS (
+  SELECT min(day) AS start, date_diff('day', min(day), max(day)) AS duration
+  FROM duration_per_day
+  WHERE on_streak
+  GROUP BY streak
+  HAVING duration > 1
+  ORDER BY start
+)
+SELECT * FROM streaks;
+
+
+--
+-- Retrieves the longes streak
+--
+CREATE OR REPLACE VIEW v_longest_streak AS
+SELECT unnest(max_by(v_streaks, duration)) FROM v_streaks;
