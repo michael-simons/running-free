@@ -379,15 +379,16 @@ WITH duration_per_day AS (
          max(duration) >= coalesce(getvariable('DURATION_PER_DAY'),30)*60                    AS on_streak,
          -- Compute the island grouping key as difference of the monotonic increasing day
          -- and the dense_rank inside the on or off streak partition
+		 -- Using row_number() OVER (ORDER BY day) won't cut it, as that won't capture days
+		 -- without activities as all
          (day - INTERVAL (dense_rank() OVER (PARTITION BY on_streak ORDER BY day) - 1) days) AS streak
   FROM garmin_activities
   GROUP BY day
 ), streaks AS (
   SELECT min(day) AS start, date_diff('day', start, max(day)) AS duration
   FROM duration_per_day
-  WHERE on_streak
-  GROUP BY streak
-  HAVING duration > 1
+  GROUP BY on_streak, streak
+  HAVING on_streak AND duration > 1
 )
 SELECT * FROM streaks
 ORDER BY start;
