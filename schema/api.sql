@@ -374,14 +374,14 @@ LEFT OUTER JOIN events e ON e.id = r.event_id;
 --
 CREATE OR REPLACE VIEW v_streaks AS
 WITH duration_per_day AS (
-  SELECT date_trunc('day', started_on)                                                       AS day, 
+  SELECT date_trunc('day', started_on)                                                   AS day,
          -- What defines a streak? More than n minutes activitiy per day
-         max(duration) >= coalesce(getvariable('DURATION_PER_DAY'),30)*60                    AS on_streak,
+         max(duration) >= coalesce(getvariable('DURATION_PER_DAY'),30)*60                AS on_streak,
          -- Compute the island grouping key as difference of the monotonic increasing day
          -- and the dense_rank inside the on or off streak partition
-		 -- Using row_number() OVER (ORDER BY day) won't cut it, as that won't capture days
-		 -- without activities as all
-         (day - INTERVAL (dense_rank() OVER (PARTITION BY on_streak ORDER BY day) - 1) days) AS streak
+         -- Using row_number() OVER (ORDER BY day) won't cut it, as that won't capture days
+         -- without activities as all
+         (day - INTERVAL (dense_rank() OVER (PARTITION BY on_streak ORDER BY day)) days) AS streak
   FROM garmin_activities
   GROUP BY day
 ), streaks AS (
