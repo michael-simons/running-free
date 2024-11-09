@@ -399,3 +399,37 @@ ORDER BY start;
 --
 CREATE OR REPLACE VIEW v_longest_streak AS
 SELECT unnest(max_by(v_streaks, duration)) FROM v_streaks;
+
+
+--
+-- Weekly averages by year and sport
+--
+CREATE OR REPLACE VIEW v_weekly_averages_by_year_and_sport AS
+WITH range AS (
+  SELECT unnest(range(min(started_on), max(started_on), interval 1 week)) AS value
+  FROM garmin_activities
+), fillers AS (
+  SELECT yearweek(value) AS yw,
+         s.unnest        AS sport,
+         0               AS distance
+  FROM range CROSS JOIN unnest(['swimming', 'cycling', 'running']) s
+), activities AS (
+  SELECT yearweek(started_on)                 AS yw,
+         f_unify_activity_type(activity_type) AS sport,
+         sum(distance)                        AS distance
+  FROM garmin_activities
+  WHERE sport IS NOT NULL
+  GROUP BY all
+), weekly_sums AS (
+  SELECT ifnull(g.yw, f.yw)             AS yw,
+         ifnull(g.sport, f.sport)       AS sport,
+         ifnull(g.distance, f.distance) AS distance
+  FROM fillers f
+  LEFT OUTER JOIN activities g USING(yw, sport)
+), weekly_avg_by_year AS (
+  SELECT CAST(floor(yw/100) AS integer) AS year, sport, round(avg(distance),2) AS avg
+  FROM weekly_sums
+  GROUP BY all
+)
+PIVOT weekly_avg_by_year ON sport IN ('swimming', 'cycling', 'running')
+USING first(avg) ORDER BY year;
