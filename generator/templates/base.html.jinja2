@@ -17,8 +17,13 @@
             }
 
             div.chart {
-                max-height: 360px;
+                max-height: 400px;
                 position: relative;
+            }
+
+            div.chart > div {
+                width: 100%;
+                height: 400px
             }
 
             img.strava-thumb {
@@ -122,8 +127,7 @@
         </footer>
 
         <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/chart.umd.min.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/chartjs-plugin-annotation.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/echarts.min.js') }}"></script>
         <script>
             const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
             const popoverList = [...popoverTriggerList].map(trigger => {

@@ -31,55 +31,58 @@
         </dl>
     </div>
     <div class="col-xl-10 col-lg-9 col-md-12 ps-5 chart">
-        <canvas id="yearly_usage"></canvas>
+        <div id="yearly_usage"></div>
     </div>
     <script>
         window.onload = function () {
             const yearly_usage = document.getElementById("yearly_usage");
             if (yearly_usage) {
-                new Chart(
-                    yearly_usage,
-                    {
+                const option = {
+                    animation: false,
+                    grid: {
+                        left: "6%",
+                        right: "3%",
+                        bottom: "10%"
+                    },
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'shadow'
+                        }
+                    },
+                    xAxis: {
+                        data: [{{ mileage_by_year['year'].to_list()|map('tojson')|join(', ') }}],
+                        splitLine: {
+                            show: true
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        nameLocation: 'center',
+                        nameGap: 50,
+                        name: 'Mileage (km)'
+                    },
+                    series: [{
                         type: 'bar',
-                        data: {
-                            labels: [{{ mileage_by_year['year'].to_list()|map('tojson')|join(', ') }}],
-                            datasets: [{
-                                data: [{{ mileage_by_year['mileage'].to_list()|map('tojson')|join(', ') }}],
-                                borderColor: '#7CB5EB',
-                                backgroundColor: 'rgba(124,181,235,0.4)',
-                            }, {
-                                type: 'line',
-                                data: [{{ trend.tolist()|map('tojson')|join(', ') }}],
-                                cubicInterpolationMode: 'monotone'
-                            }],
-                        },
-                        options: {
-                            responsive: true,
-                            animations: false,
-                            scales: {
-                                y: {
-                                    display: true,
-                                    title: {
-                                        display: true,
-                                        text: 'Mileage (km)'
-                                    }
-                                }
-                            },
-                            plugins: {
-                                title: {
-                                    display: false
-                                },
-                                legend: {
-                                    labels: {
-                                        filter(item, chart) {
-                                            return false;
-                                        }
-                                    }
-                                }
+                        data: [{{ mileage_by_year['mileage'].to_list()|map('tojson')|join(', ') }}],
+                        color: '#7CB5EB',
+                        itemStyle: {
+                            normal: {
+                                barBorderColor: 'rgba(124,181,235,0.4)'
                             }
                         }
-                    }
-                );
+                    }, {
+                        type: 'line',
+                        data: [{{ trend.tolist()|map('tojson')|join(', ') }}],
+                        smooth: true,
+                        tooltip: {
+                            show: false
+                        }
+                    }],
+                }
+                const chart = echarts.init(yearly_usage, null, {locale: 'EN'});
+                chart.setOption(option);
+                new ResizeObserver(() => chart.resize()).observe(yearly_usage);
             }
         };
     </script>

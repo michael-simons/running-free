@@ -188,14 +188,14 @@
             </p>
             <div class="col-12">
                 <div class="row">
-                    <div class="col-xl-4 col-lg-6 col-sm-12">
-                        <canvas id="development_5k" style="min-height: 400px"></canvas>
+                    <div class="col-xl-4 col-lg-6 col-sm-12 chart">
+                        <div id="development_5k"></div>
                     </div>
-                    <div class="col-xl-4 col-lg-6 col-sm-12">
-                        <canvas id="development_10k" style="min-height: 400px"></canvas>
+                    <div class="col-xl-4 col-lg-6 col-sm-12 chart">
+                        <div id="development_10k"></div>
                     </div>
-                    <div class="col-xl-4 col-lg-6 col-sm-12">
-                        <canvas id="development_21k" style="min-height: 400px"></canvas>
+                    <div class="col-xl-4 col-lg-6 col-sm-12 chart">
+                        <div id="development_21k"></div>
                     </div>
                 </div>
             </div>
@@ -271,67 +271,85 @@
             const datasets = [];
             for (let i = data.length - 1; i >= 0; i--) {
                 datasets.push({
-                    label: labels[i],
-                    data: data[i],
-                    borderWidth: i === 0 || i === 4 ? 3 : 1,
-                    fill: i === 0 ? 0 : -1
-                })
-            }
-
-            return new Chart(
-                document.getElementById(target),
-                {
                     type: 'line',
-                    data: {
-                        labels: years,
-                        datasets: datasets,
+                    name: labels[i],
+                    data: data[i],
+                    lineStyle: {
+                        width: i === 0 || i === 4 ? 3 : 1.5,
                     },
-                    options: {
-                        responsive: true,
-                        animations: false,
-                        maintainAspectRatio: false,
-                        interaction: {
-                            intersect: false,
-                            mode: 'index',
-                        },
-                        scales: {
-                            y: {
-                                display: true,
-                                reverse: true,
-                                title: {
-                                    display: true,
-                                    text: 'Pace (mm:ss)'
-                                },
-                                ticks: {
-                                    callback: function (val, index) {
-                                        return to_mi_ss(val);
-                                    }
-                                }
-                            }
-                        },
-                        plugins: {
-                            title: {
-                                text: title,
-                                display: true
-                            },
-                            legend: {
-                                labels: {
-                                    filter(item, chart) {
-                                        return false;
-                                    }
-                                }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function (context) {
-                                        return context.dataset.label + ': ' + to_mi_ss(context.parsed.y);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    fill: i === 0 ? 0 : -1,
+                    symbolSize: 6
+                })
+                if (i === 0) {
+                    datasets[i].stack = 'hlp';
                 }
-            );
+            }
+            datasets.push({
+                name: 'Area',
+                type: 'line',
+                data: data[data.length - 1].map((v, i) => data[0][i] - v),
+                lineStyle: {
+                    opacity: 0
+                },
+                symbol: 'none',
+                areaStyle: {
+                    color: 'rgba(124,181,235,0.4)',
+                },
+                tooltip: {
+                    show: false
+                },
+                stack: 'hlp',
+                stackStrategy: 'positive',
+
+            })
+
+            const domTarget = document.getElementById(target);
+            const option = {
+                animation: false,
+                title: {
+                    text: title,
+                    left: 'center',
+                    textStyle: {
+                        fontSize: 14
+                    }
+                },
+                grid: {
+                    top: '6%',
+                    left: "8%",
+                    right: "8%",
+                    bottom: "10%"
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    },
+                    valueFormatter: to_mi_ss
+                },
+                xAxis: {
+                    data: years,
+                    boundaryGap: false,
+                    splitLine: {
+                        show: true
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    scale: true,
+                    inverse: true,
+                    nameLocation: 'center',
+                    nameGap: 40,
+                    name: 'Pace (mm:ss)',
+                    axisLabel: {
+                        formatter: to_mi_ss
+                    }
+                },
+                series: datasets
+            }
+            const chart = echarts.init(domTarget);
+            chart.setOption(option);
+            new ResizeObserver(() => chart.resize()).observe(domTarget);
+            return chart;
         }
 
         window.onload = function () {

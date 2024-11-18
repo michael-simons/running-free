@@ -22,7 +22,7 @@
                     <strong>{{ summary['best_month_value']|fmt_double }}km</strong>.
                 </p>
                 <div class="col-sm-12 col-lg-9 me-2 chart">
-                    <canvas id="current_year"></canvas>
+                    <div id="current_year"></div>
                 </div>
             </div>
         {% endfor %}
@@ -33,8 +33,8 @@
                 "Temperaturkurve" at <a href="http://www.goetemp.de">Goetemp</a>, a project of my friend <a
                     href="http://www.jan-von.de">Jan</a>.
             </p>
-            <div class="col-sm-12 col-lg-9 m-2 chart">
-                <canvas id="monthly_average"></canvas>
+            <div class="col-sm-12 col-lg-9 me-2 chart">
+                <div id="monthly_average"></div>
             </div>
         </div>
         <nav class="nav">
@@ -97,138 +97,173 @@
         window.onload = function () {
             const current_year = document.getElementById("current_year");
             if (current_year) {
-                new Chart(
-                    current_year,
-                    {
-                        data: {
-                            labels: [{{ ytd_totals['month'].to_list()|map('tojson')|join(', ') }}],
-                            datasets: [
-                                {% for name, row in ytd_bikes.items() %}
-                                    {
-                                        type: 'bar',
-                                        label: '{{ name }}',
-                                        data: [{% for v in row %} {{ v ~ ','}} {% endfor %}],
-                                        stack: '{{ "s" ~ name }}',
-                                        borderColor: '{{ bikes.loc[bikes['name'] == name]['color'].values[0] }}',
-                                        backgroundColor: '{{ bikes.loc[bikes['name'] == name]['color'].values[0] }}'
-                                    },
-                                {% endfor %}
-                                {
-                                    type: 'line',
-                                    label: 'Total (Including assorted trips)',
-                                    data: [{{ ytd_totals['value'].to_list()|join(', ') }}],
-                                    cubicInterpolationMode: 'monotone',
-                                    borderColor: '#7CB5EB',
-                                    backgroundColor: '#FFF',
-                                    pointRadius: 4
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            animations: false,
-                            interaction: {
-                                intersect: false,
-                                mode: 'index',
-                            },
-                            scales: {
-                                y: {
-                                    display: true,
-                                    title: {
-                                        display: true,
-                                        text: 'Mileage (km)'
-                                    }
-                                }
-                            },
-                            plugins: {
-                                title: {
-                                    text: "Milage in {{ now.strftime('%Y') }}",
-                                    display: true
-                                },
-                                legend: {
-                                    labels: {
-                                        filter(item, chart) {
-                                            return !item.text.startsWith('Total');
-                                        }
-                                    }
-                                }
-                            }
+                const option = {
+                    animation: false,
+                    title: {
+                        text: "Milage in {{ now.strftime('%Y') }}",
+                        left: 'center',
+                        textStyle: {
+                            fontSize: 14
                         }
-                    }
-                );
+                    },
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'shadow'
+                        }
+                    },
+                    legend: {
+                        data: [{{ ytd_bikes.columns.to_list()|map('tojson')|join(', ') }}],
+                        top: 30,
+                    },
+                    grid: {
+                        left: "6%",
+                        right: "3%",
+                        bottom: "10%"
+                    },
+                    xAxis: {
+                        data: [{{ ytd_totals['month'].to_list()|map('tojson')|join(', ') }}],
+                        splitLine: {
+                            show: true
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        nameLocation: 'center',
+                        nameGap: 40,
+                        name: 'Mileage (km)'
+                    },
+                    series: [
+                        {% for name, row in ytd_bikes.items() %}
+                            {
+                                type: 'bar',
+                                name: '{{ name }}',
+                                data: [{% for v in row %} {{ v ~ ','}} {% endfor %}],
+                                emphasis: {
+                                    focus: 'series'
+                                },
+                                color: '{{ bikes.loc[bikes['name'] == name]['color'].values[0] }}',
+                                itemStyle: {
+                                    normal: {
+                                        barBorderColor: '{{ bikes.loc[bikes['name'] == name]['color'].values[0] }}',
+                                    }
+                                }
+                            },
+                        {% endfor %}
+                        {
+                            type: 'line',
+                            name: 'Total (Including assorted trips)',
+                            data: [{{ ytd_totals['value'].to_list()|join(', ') }}],
+                            smooth: true,
+                            color: '#7CB5EB',
+                            symbolSize: 6
+                        }
+                    ]
+                };
+                const chart = echarts.init(current_year);
+                chart.setOption(option);
+                new ResizeObserver(() => chart.resize()).observe(current_year);
             }
 
-            new Chart(
-                document.getElementById('monthly_average'),
-                {
-                    data: {
-                        labels: [{{ monthly_averages['month'].to_list()[0:-1]|map('tojson')|join(', ') }}],
-                        datasets: [
-                            {
-                                type: 'line',
-                                label: 'Maximum',
-                                data: [{{ monthly_averages['maximum'].to_list()[0:-1]|map('tojson')|join(', ') }}],
-                                pointStyle: false,
-                                borderColor: 'rgba(124,181,235,0.4)'
-                            },
-                            {
-                                type: 'line',
-                                label: 'Average',
-                                data: [{{ monthly_averages['average'].to_list()[0:-1]|map('tojson')|join(', ') }}],
-                                borderColor: '#7CB5EB',
-                                backgroundColor: 'white',
-                                pointRadius: 4
-                            },
-                            {
-                                type: 'line',
-                                label: 'Minimum',
-                                data: [{{ monthly_averages['minimum'].to_list()[0:-1]|map('tojson')|join(', ') }}],
-                                pointStyle: false,
-                                borderColor: 'rgba(124,181,235,0.4)',
-                                backgroundColor: 'rgba(124,181,235,0.4)',
-                                fill: 0
-                            }
-                        ]
+            const monthly_average = document.getElementById("monthly_average");
+            const max = [{{ monthly_averages['maximum'].to_list()[0:-1]|map('tojson')|join(', ') }}];
+            const min = [{{ monthly_averages['minimum'].to_list()[0:-1]|map('tojson')|join(', ') }}];
+            const option = {
+                animation: false,
+                title: {
+                    text: "Monthly average",
+                    left: 'center',
+                    textStyle: {
+                        fontSize: 14
+                    }
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                grid: {
+                    left: "6%",
+                    right: "3%",
+                    bottom: "10%"
+                },
+                xAxis: {
+                    data: [{{ monthly_averages['month'].to_list()[0:-1]|map('tojson')|join(', ') }}],
+                    boundaryGap: false,
+                    axisLabel: {
+                        interval: 0
                     },
-                    options: {
-                        responsive: true,
-                        animations: false,
-                        scales: {
-                            y: {
-                                display: true,
-                                title: {
-                                    display: true,
-                                    text: 'Mileage (km)'
-                                }
-                            }
+                    splitLine: {
+                        show: true
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    nameLocation: 'center',
+                    nameGap: 40,
+                    name: 'Mileage (km)'
+                },
+                series: [
+                    {
+                        name: 'Maximum',
+                        type: 'line',
+                        data: max,
+                        color: 'rgba(124,181,235,0.4)',
+                        symbol: 'none',
+                        stack: 'hlp'
+                    },
+                    {
+                        name: 'Area',
+                        type: 'line',
+                        data: max.map((v, i) => min[i] - v),
+                        lineStyle: {
+                            opacity: 0
                         },
-                        plugins: {
-                            title: {
-                                text: "Monthly average",
-                                display: true
-                            },
-                            legend: {
-                                labels: {
-                                    filter(item, chart) {
-                                        return false;
+                        symbol: 'none',
+                        areaStyle: {
+                            color: 'rgba(124,181,235,0.4)',
+                        },
+                        tooltip: {
+                            show: false
+                        },
+                        stack: 'hlp',
+                        stackStrategy: 'positive',
+                    },
+                    {
+                        name: 'Average',
+                        type: 'line',
+                        data: [{{ monthly_averages['average'].to_list()[0:-1]|map('tojson')|join(', ') }}],
+                        color: '#7CB5EB',
+                        symbolSize: 6,
+                        markLine: {
+                            data: [
+                                {
+                                    yAxis: '{{ monthly_averages['average'][12] }}',
+                                    label: {
+                                        show: false
                                     }
                                 }
-                            },
-                            annotation: {
-                                annotations: {
-                                    line1: {
-                                        type: 'line',
-                                        yMin: {{ monthly_averages['average'][12] }},
-                                        yMax: {{ monthly_averages['average'][12] }},
-                                        borderColor: '#F04124',
-                                        drawTime: 'beforeDatasetsDraw'
-                                    }
-                                }
+                            ],
+                            symbol: 'none',
+                            lineStyle: {
+                                type: 'solid',
+                                color: '#F04124',
                             }
                         }
+                    },
+                    {
+                        name: 'Minimum',
+                        type: 'line',
+                        data: min,
+                        color: 'rgba(124,181,235,0.4)',
+                        symbol: 'none'
                     }
-                }
-            );
+                ]
+            };
+            const chart = echarts.init(monthly_average);
+            chart.setOption(option);
+            new ResizeObserver(() => chart.resize()).observe(monthly_average);
         };
     </script>
 {% endblock %}
