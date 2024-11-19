@@ -191,9 +191,6 @@
                 xAxis: {
                     data: [{{ monthly_averages['month'].to_list()[0:-1]|map('tojson')|join(', ') }}],
                     boundaryGap: false,
-                    axisLabel: {
-                        interval: 0
-                    },
                     splitLine: {
                         show: true
                     }

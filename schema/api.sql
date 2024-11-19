@@ -375,7 +375,7 @@ LEFT OUTER JOIN events e ON e.id = r.event_id;
 CREATE OR REPLACE VIEW v_streaks AS
 WITH duration_per_day AS (
   SELECT date_trunc('day', started_on)                                                   AS day,
-         -- What defines a streak? More than n minutes activitiy per day
+         -- What defines a streak? More than n minutes activity per day
          max(duration) >= coalesce(getvariable('DURATION_PER_DAY'),30)*60                AS on_streak,
          -- Compute the island grouping key as difference of the monotonic increasing day
          -- and the dense_rank inside the on or off streak partition
@@ -399,6 +399,23 @@ ORDER BY start;
 --
 CREATE OR REPLACE VIEW v_longest_streak AS
 SELECT unnest(max_by(v_streaks, duration)) FROM v_streaks;
+
+
+--
+-- v_daily_activity_AS
+--
+CREATE OR REPLACE VIEW v_daily_activity_by_year AS
+WITH by_day AS (
+    SELECT date_trunc('day', started_on)  AS day,
+           CAST(floor(sum(duration) / 60) AS INTEGER)      AS duration
+    FROM garmin_activities
+    GROUP BY ALL
+)
+SELECT year (day) AS year, list(bd ORDER BY day) AS values
+FROM by_day bd
+GROUP BY ALL
+ORDER BY ALL;
+COMMENT ON VIEW v_daily_activity_by_year IS 'Daily minutes of activity by year';
 
 
 --

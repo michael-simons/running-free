@@ -5,58 +5,64 @@
     <div class="row mb-4">
         <div class="col clearfix">
             <img src="{{ url_for('static', filename='/img/running-free.jpg') }}"
-                 class="img-thumbnail img-fluid float-md-end col-md-4 ms-0 mb-2 ms-md-2"
+                 class="img-thumbnail img-fluid float-md-end col-md-5 col-lg-5 ms-0 mb-2 ms-md-2"
                  alt="Me finishing the ATG-Winterlauf in 2019">
             <p>
-                Hi, my name is Michael, I'm a software engineer and when I don't sit professionally on my arse in front
-                of a computer, you'll find me running, cycling or swimming somewhere.
+                Hi there 👋, my name is <strong>Michael</strong>, I'm a professional software engineer and an amateur
+                friet-athlete who enjoys running {{ 'running'|fmt_sport }}, cycling {{ 'cycling'|fmt_sport }},
+                swimming {{ 'swimming'|fmt_sport }} and recreational french-fries 🍟. This page is my place to aggregate
+                mileage, progress and race-results. For all things "social" around sport, I use <a
+                    href="https://www.strava.com/athletes/michael-simons">Strava</a>.
             </p>
             <p>
-                This page used to be only about my cycling activities. These days I see myself as a proper
-                friet-athlete, enjoying cycling, running, swimming and french fries, preferable the Dutch variant.
-                Therefor, some statistics will include the overall numbers of mileages, altitude and duration, while
-                others are restricted to cycling only.
+                The full mileage on bikes is <a href="{{ url_for('mileage') }}">here</a>. As I'm somewhat proud of my
+                progress in running since I started in <strong>2017</strong>, I created a dedicated <a
+                    href="{{ url_for('achievements') }}">achievements</a> page for that. Sometimes I take pictures durin
+                my trips: the gallery link above will take you to individual pages containing selected pictures.
             </p>
             {% for _summary in summary.itertuples() %}
-            <p>
-                While looking at cycling stats alone, I rode <strong>{{ _summary['total']|fmt_int }}km</strong> since
-                <strong>{{ _summary['since']|fmt_date }}</strong> in total.
-                That was an average of <strong>{{ _summary['avg_per_month']|fmt_int }}km</strong> per month.
-                The worst month was <strong>{{ _summary['worst_month']|fmt_month }}</strong> with
-                <strong>{{ _summary['worst_month_value']|fmt_int }}km</strong>, the best month was
-                <strong>{{ _summary['best_month']|fmt_month }}</strong> with
-                <strong>{{ _summary['best_month_value']|fmt_int }}km</strong>.
-            </p>
+                <p>
+                    I keep track of the cycling <a href="{{ url_for('gear') }}">gear</a> manually each month, these
+                    stats are always up-to-date. According to them, I rode
+                    <strong>{{ _summary['total']|fmt_int }}km</strong> since
+                    <strong>{{ _summary['since']|fmt_date }}</strong>. That was an average of
+                    <strong>{{ _summary['avg_per_month']|fmt_int }}km</strong> per month. The worst month was
+                    <strong>{{ _summary['worst_month']|fmt_month }}</strong> with
+                    <strong>{{ _summary['worst_month_value']|fmt_int }}km</strong>, the best month was
+                    <strong>{{ _summary['best_month']|fmt_month }}</strong> with
+                    <strong>{{ _summary['best_month_value']|fmt_int }}km</strong>.
+                </p>
             {% endfor %}
             {% if not by_year_and_sport.empty %}
                 <p>
-                    The overall values in <strong>{{ max_year }}</strong> produced from the current state of my Garmin activities archive are:
+                    <a href="https://connect.garmin.com">Garmin Connect</a> is my main hub for tracking all activities
+                    and I use <a href="https://github.com/michael-simons/garmin-babel">Garmin Babel</a> to massage
+                    Garmins GDPR export into a usable database. The last update of this database was on
+                    <strong>{{ max_garmin|fmt_date }}</strong> and the overall values in
+                    <strong>{{ max_garmin.year }}</strong> are:
                     {%- for distance in by_year_and_sport.itertuples() %}
-                            {%- if not loop.first and not loop.last %},
-                            {%- elif not loop.first %} and
-                            {%- endif %}
-                            <strong>{{ distance['value']|fmt_int }}km</strong> {{ distance['sport']|fmt_sport }}
+                        {%- if not loop.first and not loop.last %},
+                        {%- elif not loop.first %} and
+                        {%- endif %}
+                        <strong>{{ distance['value']|fmt_int }}km</strong> {{ distance['sport'] }}
                     {%- endfor %}.
-                    The longest 30 minutes activity streak until <strong>{{ max_garmin[0] }}</strong> lasted
-                    <strong>{{ longest_streak[1] }}</strong> days.
+                    My longest streak of getting at least <strong>30</strong> minutes activity each day began on
+                    <strong>{{ longest_streak[0]|fmt_date }}</strong> and {% if max_garmin == longest_streak[2] %}lasts
+                    already{% else %}lasted{% endif %} <strong>{{ longest_streak[1] }}</strong> days:
                 </p>
+                {% if activity_by_year.shape[0] >= 2 %}
+                    <div id="daily_activity" style="clear: both;">
+                        <div></div>
+                    </div>
+                {% endif %}
             {% endif %}
-            <p>
-                I track my mileage on bikes with this site, together with some integrations to my Garmin Archive
-                (Checkout <a href="https://github.com/michael-simons/garmin-babel">Garmin Babel</a> if you are
-                interested in that). I keep a local overview <a href="{{ url_for('mileage') }}">here</a> and I'll answer
-                most follow-requests on <a href="https://www.strava.com/athletes/michael-simons">Strava</a>. I'm
-                somewhat proud of my progress since 2017 and created a dedicated <a
-                    href="{{ url_for('achievements') }}">achievements</a> page in late 2023. The submenu on the gallery
-                link will take you individual pages containing pictures I created while exploring my area and other
-                beautiful places.
-            </p>
+
             <p>
                 Please have a look at the <a href="{{ url_for('history') }}">history</a> page if you are looking for the
                 older versions of this site and the content that has been originally created for <a
                     href="https://leanpub.com/arc42byexample">arc42 by example</a>. The <a
                     href="https://github.com/michael-simons/biking2">Spring Boot</a> based version of this site ran from
-                2014 until late 2023 until it has been ultimately replaced by a lightweight Python / DuckDB based
+                2014 until late 2023, and it has been ultimately replaced by a lightweight Python / DuckDB based
                 version.
             </p>
             <p>
@@ -72,9 +78,119 @@
                         src="{{ url_for('static', filename='img/flask-logo.png') }}"
                         alt="Flask"></a>
             <p>
-                Sources for the database schema and the site-generator are here: <a
+                Sources for the site-generator and its database schema are here: <a
                     href="https://github.com/michael-simons/biking3">michael-simons/biking3</a>.
             </p>
         </div>
     </div>
+
+    {% if activity_by_year.shape[0] >= 2 %}
+        <script>
+            function getNewSizes() {
+                const dailyActivity = document.getElementById("daily_activity");
+                const width = dailyActivity.getBoundingClientRect().width;
+
+                let cellSize;
+                let height;
+                let top0 = 30;
+                let top;
+                if (width <= 540) {
+                    cellSize = [8, 8]
+                    height = 210;
+                    top = 120;
+                } else if (width <= 720) {
+                    cellSize = [10, 10]
+                    height = 270;
+                    top = 150;
+                } else if (width <= 960) {
+                    cellSize = [16, 16];
+                    height = 330;
+                    top = 170;
+                } else if (width <= 1140) {
+                    cellSize = [18, 18];
+                    height = 350;
+                    top = 190;
+                } else {
+                    cellSize = [20, 20];
+                    height = 360;
+                    top = 210;
+                }
+
+                return {
+                    size: {width: width, height: height}, option: {
+                        calendar: [
+                            {
+                                cellSize: cellSize,
+                                top: top0
+                            },
+                            {
+                                cellSize: cellSize,
+                                top: top
+                            }
+                        ]
+                    }
+                };
+            }
+
+            window.onload = function () {
+                const dailyActivity = document.querySelector("#daily_activity > div");
+                if (!dailyActivity) {
+                    return;
+                }
+                const sizes = getNewSizes();
+                const chart = echarts.init(dailyActivity, null, sizes.size);
+                const option = {
+                    animation: false,
+                    tooltip: {
+                        position: 'top'
+                    },
+                    visualMap: {
+                        min: 0,
+                        max: 480,
+                        calculable: true,
+                        show: false,
+                    },
+                    calendar: [
+                        {
+                            grid: {
+                                left: 0
+                            },
+                            dayLabel: {show: false},
+                            range: {{ activity_by_year['year'][1] }},
+                            cellSize: [12, 12]
+                        },
+                        {
+                            grid: {
+                                left: 0
+                            },
+                            dayLabel: {show: false},
+                            range: {{ activity_by_year['year'][0] }},
+                            cellSize: [12, 12]
+                        }
+                    ],
+                    series: [
+                        {
+                            type: 'heatmap',
+                            coordinateSystem: 'calendar',
+                            calendarIndex: 0,
+                            data: [{{ activity_by_year['values'][1].tolist()|map('tojson')|join(', ') }}].map((value) => [Date.parse(value.day), value.duration])
+                        },
+                        {
+                            type: 'heatmap',
+                            coordinateSystem: 'calendar',
+                            calendarIndex: 1,
+                            data: [{{ activity_by_year['values'][0].tolist()|map('tojson')|join(', ') }}].map((value) => [Date.parse(value.day), value.duration])
+                        }
+                    ]
+                };
+
+                chart.setOption(option);
+                new ResizeObserver(() => {
+                    const newSizes = getNewSizes();
+                    chart.setOption(newSizes.option)
+                    chart.resize(newSizes.size)
+                }).observe(dailyActivity);
+            }
+        </script>
+    {% endif %}
 {% endblock %}
