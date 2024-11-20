@@ -24,6 +24,7 @@ The latter will freeze the site and generate static HTML files.
 The following list is a collection of projects that might be useful in adding stuff:
 
 * https://github.com/SamR1/FitTrackee
+* https://github.com/martin-ueding/geo-activity-playground
 * https://github.com/komoot/staticmap
 * https://protomaps.com
 * https://github.com/maplibre/martin
