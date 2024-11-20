@@ -69,10 +69,9 @@ def site(database: str):
 
     @app.route('/')
     def index():
-        max_year = flask.current_app.jinja_env.globals.get('max_year')
         with db.cursor() as con:
             summary = con.execute('FROM v_summary').df()
-            max_garmin = con.execute('SELECT max(started_on)::date FROM garmin_activities').fetchone()[0]
+            max_garmin = con.execute('SELECT max(started_on) FROM garmin_activities').fetchone()[0]
             if max_garmin is None:
                 max_garmin = now
             longest_streak = con.execute('SELECT *, CAST(start + INTERVAL (duration) day AS date) AS end FROM v_longest_streak').fetchone()
