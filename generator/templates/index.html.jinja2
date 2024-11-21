@@ -88,28 +88,48 @@
         <script>
             function getNewSizes() {
                 const dailyActivity = document.getElementById("daily_activity");
-                const width = dailyActivity.getBoundingClientRect().width;
+                const width = dailyActivity.getBoundingClientRect().width + 24;
 
                 let cellSize;
                 let height;
                 let top0 = 30;
                 let top;
-                if (width <= 540) {
+                let left = 60
+                let yearLabel = {
+                    margin: 30,
+                    fontSize: 24
+                };
+                // https://getbootstrap.com/docs/5.0/layout/grid/#grid-options
+                if (width === 540) {
                     cellSize = [8, 8]
                     height = 210;
                     top = 120;
-                } else if (width <= 720) {
-                    cellSize = [10, 10]
+                    left = 40;
+                    yearLabel.margin = 15;
+                    yearLabel.fontSize = 12;
+                } else if (width === 720) {
+                    cellSize = [12, 12]
                     height = 270;
                     top = 150;
-                } else if (width <= 960) {
+                    left = 40;
+                    yearLabel.margin = 15;
+                    yearLabel.fontSize = 16;
+                } else if (width === 960) {
                     cellSize = [16, 16];
                     height = 330;
                     top = 170;
-                } else {
+                } else if (width >= 1140) {
                     cellSize = [18, 18];
                     height = 350;
                     top = 190;
+                } else {
+                    cellSize = [7, 7]
+                    height = 180;
+                    top0 = 20;
+                    top = 110;
+                    left = 20;
+                    yearLabel.margin = 10;
+                    yearLabel.fontSize = 10;
                 }
 
                 return {
@@ -117,11 +137,15 @@
                         calendar: [
                             {
                                 cellSize: cellSize,
-                                top: top0
+                                top: top0,
+                                left: left,
+                                yearLabel: yearLabel
                             },
                             {
                                 cellSize: cellSize,
-                                top: top
+                                top: top,
+                                left: left,
+                                yearLabel: yearLabel
                             }
                         ]
                     }
