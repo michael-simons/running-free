@@ -1,0 +1,22 @@
+erDiagram
+    assorted_trips {integer id date covered_on decimal distance}
+    bike_maintenance {integer id integer bike_id date conducted_on decimal milage}
+    bike_specs {integer id integer bike_id integer pos varchar item boolean removed}
+    garmin_activities {bigint garmin_id varchar name timestamp started_on varchar activity_type varchar sport_type decimal distance decimal elevation_gain integer duration integer elapsed_duration integer moving_duration tinyint v_o_2_max decimal start_longitude decimal start_latitude decimal end_longitude decimal end_latitude varchar gear boolean gpx_available bigint device_id}
+    lent_milages {integer id date lent_on date returned_on decimal amount timestamp created_at integer bike_id}
+    cooper_test_results {date taken_on decimal result}
+    user_profile {varchar name varchar value}
+    bike_maintenance_line_items {integer id integer maintenance_id varchar item}
+    shoes {integer id varchar make varchar model date first_run_on date last_run_on integer last_milage struct picture boolean hide}
+    bikes {integer id varchar name date bought_on varchar color date decommissioned_on timestamp created_at boolean miscellaneous boolean hide}
+    garmin_devices {bigint device_id varchar product_name varchar serial_number varchar part_number}
+    milages {integer id date recorded_on decimal amount timestamp created_at integer bike_id}
+    results {integer event_id date achieved_at integer duration decimal distance varchar certificate bigint activity_id}
+    events {integer id varchar name varchar type boolean one_time_only boolean hide}
+    health_metrics {date ref_date utinyint chronological_age decimal biological_age decimal weight decimal body_fat utinyint resting_heart_rate decimal vo2max_biometric decimal vo2max_running decimal vo2max_cycling utinyint avg_stress_level utinyint min_heart_rate utinyint max_heart_rate decimal body_water decimal bone_mass decimal muscle_mass utinyint lowest_spo2_value}
+    bikes ||--o{ milages : "bike_id"
+    bike_maintenance ||--o{ bike_maintenance_line_items : "maintenance_id"
+    bikes ||--o{ bike_maintenance : "bike_id"
+    events ||--o{ results : "event_id"
+    bikes ||--o{ lent_milages : "lent for"
+    bikes ||--o{ bike_specs : "bike_id"

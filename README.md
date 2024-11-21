@@ -6,10 +6,10 @@ The whole software is catered for my needs and I doubt that is that useful for o
 
 ## Database schema
 
-The SQL commands have all been developed and tested with [DuckDB](https://duckdb.org) >= 0.8.1.
+The SQL commands have all been developed and tested with [DuckDB](https://duckdb.org) >= 1.0.0.
 They are separated in 3 categories:
 
-- Base tables
+- Base tables (Physical ER-Diagram is [here](generator/static/docs/schema.mermaid))
 - Shared views (not particular helpful in isolation)
 - API (Views to be accessed by all sort of clients)
 

@@ -20,7 +20,7 @@ ALTER TABLE bikes ADD COLUMN IF NOT EXISTS hide BOOLEAN DEFAULT false;
 -- Stores the total km travelled with any given bike once per month.
 --
 CREATE SEQUENCE IF NOT EXISTS milage_id;
-CREATE TABLE IF NOT EXISTS milages(
+CREATE TABLE IF NOT EXISTS milages (
   id                  INTEGER PRIMARY KEY DEFAULT(nextval('milage_id')),
   recorded_on         DATE CHECK (day(recorded_on) = 1)  NOT NULL,
   amount              DECIMAL(8, 2) NOT NULL,
@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS lent_milages (
   CONSTRAINT lent_milage_unique UNIQUE(bike_id, lent_on),
   CONSTRAINT lent_milage_bike_fk FOREIGN KEY(bike_id) REFERENCES bikes(id)
 );
+COMMENT ON COLUMN lent_milages.bike_id IS 'lent for';
 
 
 --
