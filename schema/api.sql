@@ -395,14 +395,21 @@ ORDER BY start;
 
 
 --
--- Retrieves the longest streak
+-- v_longest_streak
 --
 CREATE OR REPLACE VIEW v_longest_streak AS
-SELECT unnest(max_by(v_streaks, duration)) FROM v_streaks;
+WITH longest AS (
+    SELECT unnest(max_by(v_streaks, duration)) FROM v_streaks
+), max_garmin AS (
+    SELECT max(started_on)::date AS value FROM garmin_activities
+) SELECT start, duration,
+         CAST(start + INTERVAL (duration) day AS date) == max_garmin.value AS still_ongoing
+FROM longest, max_garmin;
+COMMENT ON VIEW v_longest_streak IS 'Retrieves the longest streak';
 
 
 --
--- v_daily_activity_AS
+-- v_daily_activity_by_year
 --
 CREATE OR REPLACE VIEW v_daily_activity_by_year AS
 WITH by_day AS (

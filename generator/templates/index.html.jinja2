@@ -47,7 +47,7 @@
                         <strong>{{ distance['value']|fmt_int }}km</strong> {{ distance['sport'] }}
                     {%- endfor %}.
                     My longest streak of getting at least <strong>30</strong> minutes activity each day began on
-                    <strong>{{ longest_streak[0]|fmt_date }}</strong> and {% if max_garmin == longest_streak[2] %}lasts
+                    <strong>{{ longest_streak[0]|fmt_date }}</strong> and {% if longest_streak[2] %}lasts
                     already{% else %}lasted{% endif %} <strong>{{ longest_streak[1] }}</strong> days:
                 </p>
                 {% if activity_by_year.shape[0] >= 2 %}

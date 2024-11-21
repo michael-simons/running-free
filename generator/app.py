@@ -74,7 +74,7 @@ def site(database: str):
             max_garmin = con.execute('SELECT max(started_on) FROM garmin_activities').fetchone()[0]
             if max_garmin is None:
                 max_garmin = now
-            longest_streak = con.execute('SELECT *, CAST(start + INTERVAL (duration) day AS date) AS end FROM v_longest_streak').fetchone()
+            longest_streak = con.execute('FROM v_longest_streak').fetchone()
             by_year_and_sport = con.execute('FROM v_distances_by_year_and_sport WHERE year = ?', [max_garmin.year]).df()
             activity_by_year = con.execute('FROM v_daily_activity_by_year WHERE year > ?', [max_garmin.year - 2]).df()
 
