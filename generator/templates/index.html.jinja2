@@ -5,7 +5,7 @@
     <div class="row mb-4">
         <div class="col clearfix">
             <img src="{{ url_for('static', filename='/img/running-free.jpg') }}"
-                 class="img-thumbnail img-fluid float-md-end col-md-5 col-lg-5 ms-0 mb-2 ms-md-2"
+                 class="img-thumbnail img-fluid float-md-end col-md-5 col-xl-4 ms-0 mb-2 ms-md-2"
                  alt="Me finishing the ATG-Winterlauf in 2019">
             <p>
                 Hi there 👋, my name is <strong>Michael</strong>, I'm a professional software engineer and an amateur
@@ -106,14 +106,10 @@
                     cellSize = [16, 16];
                     height = 330;
                     top = 170;
-                } else if (width <= 1140) {
+                } else {
                     cellSize = [18, 18];
                     height = 350;
                     top = 190;
-                } else {
-                    cellSize = [20, 20];
-                    height = 360;
-                    top = 210;
                 }
 
                 return {
