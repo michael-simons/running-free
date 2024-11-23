@@ -1,3 +1,5 @@
+LOAD spatial;
+
 --
 -- Computes the age group according to DLV / DLO, see
 -- https://www.leichtathletik.de/fileadmin/user_upload/006_Wir-im-DLV/03_Struktur/DLV_Satzung_Ordnungen/Deutsche_Leichtathletik-Ordnung.pdf
@@ -47,4 +49,32 @@ CREATE OR REPLACE FUNCTION f_unify_activity_type(activity_type) AS (
     WHEN activity_type IN ('track_running', 'running', 'treadmill_running') THEN 'running'
     WHEN activity_type IN ('lap_swimming', 'open_water_swimming', 'swimming') THEN 'swimming'
   END
+);
+
+
+--
+-- Computes the tile number of a slippy map tile according to https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+-- @param p a POINT geometry
+-- @param z the zoom level
+-- @return struct(x integer, y integer)
+--
+CREATE OR REPLACE FUNCTION f_get_tile_number(p, z) AS (
+    SELECT {
+        x: CAST(floor((st_x(p) + 180) / 360 * (1<<z) ) AS integer),
+        y: CAST(floor((1 - ln(tan(radians(st_y(p))) + 1 / cos(radians(st_y(p)))) / pi())/ 2* (1<<z)) AS integer)
+    }
+);
+
+--
+-- Computes the bounding box of a slippy map tile according to https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+-- @param tile struct(x integer, y integer) containing the tile
+-- @param z the zoom level
+-- @return POLYGON geometry representing a tile
+--
+CREATE OR REPLACE FUNCTION f_make_tile(tile, zoom) AS (
+    SELECT
+        ST_Extent_Agg(ST_Point(
+            (tile['x'] + h[1]) / pow(2.0, zoom) * 360.0 - 180,
+            degrees(atan(sinh(pi() - (2.0 * pi() * (tile['y'] + h[2])) / pow(2.0, zoom))))
+        )) FROM (SELECT unnest([[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]) as h)
 );
