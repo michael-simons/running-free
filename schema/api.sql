@@ -367,7 +367,8 @@ SELECT g.garmin_id                                AS id,
        round(g.elevation_gain)                    AS elevation_gain
 FROM garmin_activities g
 LEFT OUTER JOIN results r ON r.activity_id = g.garmin_id
-LEFT OUTER JOIN events e ON e.id = r.event_id;
+LEFT OUTER JOIN events e ON e.id = r.event_id
+WHERE coalesce(r.distance, g.distance) <> 0;
 
 
 --
