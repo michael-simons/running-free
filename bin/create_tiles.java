@@ -2,6 +2,7 @@
 //JAVA 23
 //DEPS info.picocli:picocli:4.7.6
 //DEPS org.duckdb:duckdb_jdbc:1.1.3
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,9 +15,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
@@ -77,6 +81,10 @@ public class create_tiles implements Callable<Integer> {
 		}
 
 		record Tile(long x, long y, int zoom) {
+			static Tile of(String value) {
+				var values = value.split(",");
+				return new Tile(Long.parseLong(values[0]), Long.parseLong(values[1]), Integer.parseInt(values[2]));
+			}
 		}
 
 		private final static int[] DX = {1, 0, -1, 0};
@@ -113,7 +121,8 @@ public class create_tiles implements Callable<Integer> {
 
 		public void update() throws Exception {
 			this.processNewActivities();
-			this.labelCluster();
+			this.findClusters();
+			this.findSquares();
 		}
 
 		@Override
@@ -204,7 +213,7 @@ public class create_tiles implements Callable<Integer> {
 			}
 		}
 
-		private void labelCluster() throws SQLException {
+		private void findClusters() throws SQLException {
 
 			var tiles = new LinkedHashSet<Tile>();
 			try (var stmt = connection.prepareStatement("SELECT x, y, zoom FROM tiles WHERE zoom = ? ORDER BY x, y");
@@ -216,9 +225,15 @@ public class create_tiles implements Callable<Integer> {
 					}
 				}
 			}
-			var labels = doLabel(tiles);
+			var labels = findClusters0(tiles);
+			var cnt = new AtomicInteger(1);
+			var mapping = new HashMap<Integer, Integer>();
+
+			// Make cluster index start at 1 and uniform
+			labels.entrySet().stream().sorted(Map.Entry.comparingByValue())
+				.forEach(e -> e.setValue(mapping.computeIfAbsent(e.getValue(), v -> cnt.getAndIncrement())));
 			try (
-				var stmt = connection.prepareStatement("UPDATE tiles SET CLUSTER = ? WHERE x = ? AND y = ? AND zoom = ?");
+				var stmt = connection.prepareStatement("UPDATE tiles SET cluster_index = ? WHERE x = ? AND y = ? AND zoom = ?");
 			) {
 				for (Tile tile : tiles) {
 					stmt.setInt(1, labels.getOrDefault(tile, 0));
@@ -233,13 +248,13 @@ public class create_tiles implements Callable<Integer> {
 		}
 
 		/**
-		 * Depth first search implementation of "one component at a time",
-		 * see<a href=" https://en.wikipedia.org/wiki/Connected-component_labeling#cite_note-1">...</a>5
+		 * Depth first search implementation of "one component at a time", see
+		 * <a href=" https://en.wikipedia.org/wiki/Connected-component_labeling">Connected-component_labeling</a>.
 		 *
 		 * @param tiles the tiles to be labelled
 		 * @return the new labels
 		 */
-		private static Map<Tile, Integer> doLabel(LinkedHashSet<Tile> tiles) {
+		private static Map<Tile, Integer> findClusters0(LinkedHashSet<Tile> tiles) {
 			int label = 0;
 			var labels = new HashMap<Tile, Integer>();
 
@@ -271,6 +286,98 @@ public class create_tiles implements Callable<Integer> {
 			for (int direction = 0; direction < 4; ++direction) {
 				dfs(tiles, labels, new Tile(currentTile.x() + DX[direction], currentTile.y() + DY[direction], currentTile.zoom()), currentLabel);
 			}
+		}
+
+		private void findSquares() throws Exception {
+
+			Map<Integer, List<Tile>> maxSquares;
+			try (var stmt = connection.createStatement()) {
+				stmt.executeUpdate("UPDATE tiles SET square = null");
+
+				var result = stmt.executeQuery("SELECT count(distinct x) FROM tiles");
+				result.next();
+				var rows = result.getInt(1);
+				result.close();
+
+				result = stmt.executeQuery("""
+					PIVOT (
+						SELECT x, y, concat(x, ',', y, ',', zoom) as f FROM tiles
+					) ON y using(any_value(f)) ORDER BY x
+					""");
+				var numColumns = result.getMetaData().getColumnCount();
+				var matrix = new String[rows][numColumns];
+
+				int row = 0;
+				while (result.next()) {
+					for (int col = 0; col < numColumns; ++col) {
+						matrix[row][col] = result.getString(col + 1);
+					}
+					++row;
+				}
+				result.close();
+				maxSquares = findSquares0(matrix);
+			}
+
+			try (var stmt = connection.prepareStatement("UPDATE tiles SET square = ? WHERE x = ? AND y = ? AND zoom = ?")) {
+				for (Map.Entry<Integer, List<Tile>> entry : maxSquares.entrySet()) {
+					Integer k = entry.getKey();
+					List<Tile> v = entry.getValue();
+					for (Tile tile : v) {
+						stmt.setInt(1, k);
+						stmt.setLong(2, tile.x());
+						stmt.setLong(3, tile.y());
+						stmt.setLong(4, tile.zoom());
+						stmt.addBatch();
+					}
+				}
+				stmt.executeBatch();
+			}
+			connection.commit();
+		}
+
+		/**
+		 * From <a href="https://www.geeksforgeeks.org/maximum-size-sub-matrix-with-all-1s-in-a-binary-matrix">geeksforgeeks.org</a>
+		 *
+		 * @param mat the matrix that might contain squares
+		 * @return a map containing the size of the biggest square and all starting points of such squares
+		 */
+		private static Map<Integer, List<Tile>> findSquares0(String[][] mat) {
+			int n = mat.length, m = mat[0].length;
+			int ans = 0;
+
+			// Create 1d array
+			int[] dp = new int[n + 1];
+
+			// variable to store the value of
+			// {i, j+1} as its value will be
+			// lost while setting dp[i][j+1].
+			int diagonal = 0;
+
+			// Holder for all squares of a size found
+			var answers = new TreeMap<Integer, List<Tile>>();
+
+			// Traverse column by column
+			for (int j = m - 1; j >= 0; j--) {
+				for (int i = n - 1; i >= 0; i--) {
+					int tmp = dp[i];
+
+					// If square cannot be formed
+					if (mat[i][j] == null) {
+						dp[i] = 0;
+					} else {
+						dp[i] = 1 + Math.min(dp[i], Math.min(diagonal, dp[i + 1]));
+					}
+					diagonal = tmp;
+					if (dp[i] > 0 && dp[i] >= ans) {
+						ans = dp[i];
+						var tile = Tile.of(mat[i][j]);
+						// remove all starting point that are smaller
+						answers.headMap(ans).clear();
+						answers.computeIfAbsent(ans, k -> new ArrayList<>()).add(tile);
+					}
+				}
+			}
+			return answers;
 		}
 	}
 }

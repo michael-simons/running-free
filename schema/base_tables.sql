@@ -274,6 +274,7 @@ CREATE TABLE IF NOT EXISTS tiles (
     visited_count    INT NOT NULL,
     visited_first_on DATE NOT NULL,
     visited_last_on  DATE NOT NULL,
-    cluster          INT,
+    cluster_index    INT,
+    square           UTINYINT,
     PRIMARY KEY (x, y, zoom)
 );
