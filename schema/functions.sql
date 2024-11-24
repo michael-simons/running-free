@@ -56,25 +56,25 @@ CREATE OR REPLACE FUNCTION f_unify_activity_type(activity_type) AS (
 -- Computes the tile number of a slippy map tile according to https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
 -- @param p a POINT geometry
 -- @param z the zoom level
--- @return struct(x integer, y integer)
+-- @return struct(x integer, y integer, zoom integer)
 --
 CREATE OR REPLACE FUNCTION f_get_tile_number(p, z) AS (
     SELECT {
         x: CAST(floor((st_x(p) + 180) / 360 * (1<<z) ) AS integer),
-        y: CAST(floor((1 - ln(tan(radians(st_y(p))) + 1 / cos(radians(st_y(p)))) / pi())/ 2* (1<<z)) AS integer)
+        y: CAST(floor((1 - ln(tan(radians(st_y(p))) + 1 / cos(radians(st_y(p)))) / pi())/ 2* (1<<z)) AS integer),
+        zoom: z
     }
 );
 
 --
 -- Computes the bounding box of a slippy map tile according to https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
--- @param tile struct(x integer, y integer) containing the tile
--- @param z the zoom level
+-- @param tile struct(x integer, y integer, z integer) containing the tile
 -- @return POLYGON geometry representing a tile
 --
-CREATE OR REPLACE FUNCTION f_make_tile(tile, zoom) AS (
+CREATE OR REPLACE FUNCTION f_make_tile(tile) AS (
     SELECT
         ST_Reverse(ST_Extent_Agg(ST_Point(
-            (tile['x'] + h[1]) / pow(2.0, zoom) * 360.0 - 180,
-            degrees(atan(sinh(pi() - (2.0 * pi() * (tile['y'] + h[2])) / pow(2.0, zoom))))
+            (tile['x'] + h[1]) / pow(2.0, tile['zoom']) * 360.0 - 180,
+            degrees(atan(sinh(pi() - (2.0 * pi() * (tile['y'] + h[2])) / pow(2.0, tile['zoom']))))
         ))) FROM (SELECT unnest([[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]) as h)
 );

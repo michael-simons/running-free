@@ -1,5 +1,7 @@
 -- noinspection SqlResolveForFile
 
+LOAD spatial;
+
 --
 -- Stores the managed bikes.
 --
@@ -112,6 +114,13 @@ CREATE TABLE IF NOT EXISTS garmin_activities (
 -- Add a flag whether the GPX data is available or not
 --
 ALTER TABLE garmin_activities ADD COLUMN IF NOT EXISTS gpx_available BOOLEAN DEFAULT false;
+
+
+--
+-- Add a flag whether the GPX data was processed into tiles or not
+--
+ALTER TABLE garmin_activities ADD COLUMN IF NOT EXISTS gpx_processed BOOLEAN DEFAULT false;
+
 
 --
 -- Add the device id
@@ -252,3 +261,19 @@ ALTER TABLE garmin_devices ALTER COLUMN serial_number DROP NOT NULL;
 -- Optionally link Garmin activities to results (add foreign keys not supported, would require dropping and recreating the table)
 --
 ALTER TABLE results ADD COLUMN IF NOT EXISTS activity_id BIGINT NULL;
+
+
+--
+-- Explored tiles
+--
+CREATE TABLE IF NOT EXISTS tiles (
+    x                BIGINT NOT NULL,
+    y                BIGINT NOT NULL,
+    zoom             UTINYINT NOT NULL,
+    geom             GEOMETRY NOT NULL,
+    visited_count    INT NOT NULL,
+    visited_first_on DATE NOT NULL,
+    visited_last_on  DATE NOT NULL,
+    cluster          INT,
+    PRIMARY KEY (x, y, zoom)
+);
