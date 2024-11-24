@@ -73,8 +73,8 @@ CREATE OR REPLACE FUNCTION f_get_tile_number(p, z) AS (
 --
 CREATE OR REPLACE FUNCTION f_make_tile(tile, zoom) AS (
     SELECT
-        ST_Extent_Agg(ST_Point(
+        ST_Reverse(ST_Extent_Agg(ST_Point(
             (tile['x'] + h[1]) / pow(2.0, zoom) * 360.0 - 180,
             degrees(atan(sinh(pi() - (2.0 * pi() * (tile['y'] + h[2])) / pow(2.0, zoom))))
-        )) FROM (SELECT unnest([[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]) as h)
+        ))) FROM (SELECT unnest([[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]) as h)
 );
