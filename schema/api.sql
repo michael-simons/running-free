@@ -357,7 +357,8 @@ CREATE OR REPLACE VIEW v_activity_details AS
 SELECT g.garmin_id                                AS id,
        strftime(coalesce(r.achieved_at, g.started_on), '%Y-%m-%d') || ': ' || coalesce(e.name, g.name)
                                                   AS name,
-       f_unify_activity_type(activity_type)       AS activity_type,
+       coalesce(f_unify_activity_type(activity_type), sport_type)
+                                                  AS activity_type,
        round(coalesce(r.distance, g.distance), 1) AS distance,
        coalesce(f_pace(r.distance, r.duration),f_pace(g.distance, g.duration))
                                                   AS pace,
