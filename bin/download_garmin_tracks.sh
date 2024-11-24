@@ -49,18 +49,23 @@ else
   """
 
   ids=$(duckdb "$DB" -noheader -list -readonly -c "$QUERY")
-  garmin-babel "$GARMIN_ARCHIVE" download-activities \
-    --formats=fit,gpx \
-    --user-name="$GARMIN_USER" \
-     --concurrent-downloads=2 \
-     --ids="$ids" \
-     "$TARGET_DIR"
+  if [ -n "${ids}" ]; then
+    garmin-babel "$GARMIN_ARCHIVE" download-activities \
+      --formats=fit,gpx \
+      --user-name="$GARMIN_USER" \
+      --concurrent-downloads=2 \
+      --ids="$ids" \
+      "$TARGET_DIR"
+  fi
 fi
 
-find "$TARGET_DIR" -iname "*.gpx" -exec basename {} .gpx \; |
-duckdb "$DB" -s "
-  UPDATE garmin_activities SET gpx_available = true
-  WHERE garmin_id IN (
-    FROM read_csv_auto('/dev/stdin')
-  )
-"
+if compgen -G "$TARGET_DIR/*.gpx" > /dev/null;
+then
+  find "$TARGET_DIR" -iname "*.gpx" -exec basename {} .gpx \; |
+  duckdb "$DB" -s "
+    UPDATE garmin_activities SET gpx_available = true
+    WHERE garmin_id IN (
+      FROM read_csv_auto('/dev/stdin')
+    )
+  "
+fi
