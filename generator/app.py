@@ -12,6 +12,8 @@ import click
 import duckdb
 import flask
 import functools
+import gpxpy
+import gzip
 import jinja2.exceptions
 import pandas
 
@@ -174,30 +176,31 @@ def site(database: str):
     @app.route("/map/<activity_id>.png")
     def map(activity_id: int):
 
-        gpx_file = track_dir.joinpath(f'{activity_id}.gpx')
+        gpx_file = track_dir.joinpath(f'{activity_id}.gpx.gz')
         if not gpx_file.is_file():
             flask.abort(404)
 
         filename = track_dir.joinpath(f'{activity_id}.png')
         if not filename.is_file():
+            map_data = []
+            with gzip.open(gpx_file) as handle:
+                gpx = gpxpy.parse(handle.read())
+                for track in gpx.tracks:
+                    for segment in track.segments:
+                        for point in segment.points:
+                            map_data.append([point.longitude, point.latitude])
+            line = Line(map_data, '#3388FF', 4)
+            m = StaticMap(1000, 1000, 10)
+            m.add_line(line)
+            image = m.render()
+
+            d = ImageDraw.Draw(image)
+
+            margin = 20
+            margin_top_label = image.height - margin - font_data.size - font_label.size * 1.25
+            margin_top_value = image.height - margin - font_data.size
+
             with db.cursor() as con:
-                map_data = []
-                points = con.execute("SELECT st_x(geom), st_y(geom) FROM st_read(?, layer = 'track_points')",
-                                     [str(gpx_file)]).fetchall()
-                for point in points:
-                    map_data.append([point[0], point[1]])
-
-                line = Line(map_data, '#3388FF', 4)
-                m = StaticMap(1000, 1000, 10)
-                m.add_line(line)
-                image = m.render()
-
-                d = ImageDraw.Draw(image)
-
-                margin = 20
-                margin_top_label = image.height - margin - font_data.size - font_label.size * 1.25
-                margin_top_value = image.height - margin - font_data.size
-
                 details = con.execute('FROM v_activity_details WHERE id = ?', [activity_id]).fetchone()
                 cols = [col[0] for col in con.description]
 

@@ -2,12 +2,15 @@
 //JAVA 23
 //DEPS info.picocli:picocli:4.7.6
 //DEPS org.duckdb:duckdb_jdbc:1.1.3
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -16,6 +19,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
 
 import picocli.AutoComplete;
 import picocli.CommandLine;
@@ -87,7 +91,7 @@ public class create_tiles implements Callable<Integer> {
 				var allFiles = Files.list(tracksDir);
 			) {
 				var allGpxFiles = allFiles
-					.filter(p -> p.getFileName().toString().endsWith(".gpx"))
+					.filter(p -> p.getFileName().toString().endsWith(".gpx.gz"))
 					.collect(Collectors.toMap(p -> p.getFileName().toString(), Function.identity()));
 
 				var connection = DriverManager.getConnection("jdbc:duckdb:" + database.toAbsolutePath());
@@ -107,7 +111,7 @@ public class create_tiles implements Callable<Integer> {
 			this.connection = connection;
 		}
 
-		public void update() throws SQLException {
+		public void update() throws Exception {
 			this.processNewActivities();
 			this.labelCluster();
 		}
@@ -119,7 +123,7 @@ public class create_tiles implements Callable<Integer> {
 			}
 		}
 
-		private void processNewActivities() throws SQLException {
+		private void processNewActivities() throws SQLException, IOException {
 
 			var files = findUnprocessedActivities();
 			var query = """
@@ -146,25 +150,37 @@ public class create_tiles implements Callable<Integer> {
 				""";
 
 			// Create or update tiles
-			try (var stmt = connection.prepareStatement(query)) {
-				for (var file : files) {
-					stmt.setInt(1, 14);
-					stmt.setLong(2, file.id());
-					stmt.setString(3, file.path().toString());
-					stmt.addBatch();
+			var tmpFiles = new ArrayList<Path>();
+			try {
+				try (var stmt = connection.prepareStatement(query)) {
+					for (var file : files) {
+						var tmp = Files.createTempFile("create-tiles-", ".gpx");
+						try (var gis = new GZIPInputStream(new FileInputStream(file.path().toFile()))) {
+							Files.copy(gis, tmp, StandardCopyOption.REPLACE_EXISTING);
+						}
+						stmt.setInt(1, 14);
+						stmt.setLong(2, file.id());
+						stmt.setString(3, tmp.toString());
+						tmpFiles.add(tmp);
+						stmt.addBatch();
+					}
+					stmt.executeBatch();
 				}
-				stmt.executeBatch();
-			}
 
-			// Mark activities as processed
-			try (var stmt = connection.prepareStatement("UPDATE garmin_activities SET gpx_processed = true WHERE garmin_id = ?")) {
-				for (var file : files) {
-					stmt.setLong(1, file.id());
-					stmt.addBatch();
+				// Mark activities as processed
+				try (var stmt = connection.prepareStatement("UPDATE garmin_activities SET gpx_processed = true WHERE garmin_id = ?")) {
+					for (var file : files) {
+						stmt.setLong(1, file.id());
+						stmt.addBatch();
+					}
+					stmt.executeBatch();
 				}
-				stmt.executeBatch();
+				connection.commit();
+			} finally {
+				for (Path tmpFile : tmpFiles) {
+					Files.deleteIfExists(tmpFile);
+				}
 			}
-			connection.commit();
 		}
 
 		private Set<IdAndPath> findUnprocessedActivities() throws SQLException {
@@ -179,7 +195,7 @@ public class create_tiles implements Callable<Integer> {
 				var unprocessedActivities = new HashSet<IdAndPath>();
 				while (result.next()) {
 					var id = result.getLong(1);
-					var path = allGpxFiles.get(id + ".gpx");
+					var path = allGpxFiles.get(id + ".gpx.gz");
 					if (path != null) {
 						unprocessedActivities.add(new IdAndPath(id, path));
 					}
@@ -224,12 +240,12 @@ public class create_tiles implements Callable<Integer> {
 		 * @return the new labels
 		 */
 		private static Map<Tile, Integer> doLabel(LinkedHashSet<Tile> tiles) {
-			int component = 0;
+			int label = 0;
 			var labels = new HashMap<Tile, Integer>();
 
 			for (var tile : tiles) {
 				if (!labels.containsKey(tile)) {
-					dfs(tiles, labels, tile, ++component);
+					dfs(tiles, labels, tile, ++label);
 				}
 			}
 			return labels;
