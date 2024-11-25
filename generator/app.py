@@ -174,7 +174,7 @@ def site(database: str):
         return flask.render_template('history.html.jinja2')
 
     @app.route("/map/<activity_id>.png")
-    def map(activity_id: int):
+    def activity_map(activity_id: int):
 
         gpx_file = track_dir.joinpath(f'{activity_id}.gpx.gz')
         if not gpx_file.is_file():

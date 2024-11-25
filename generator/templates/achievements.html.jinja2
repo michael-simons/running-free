@@ -42,7 +42,7 @@
                                                 {% if event['activity_id'] %}
                                                     {% set activity_id = event['activity_id']|fmt_int %}
                                                     <div style="display: none">
-                                                        <img src="{{ url_for('map', activity_id=activity_id) }}"
+                                                        <img src="{{ url_for('activity_map', activity_id=activity_id) }}"
                                                              id="{{ activity_id }}" alt="{{ event['name'] }}"
                                                              class="activity-map"/>
                                                     </div>
@@ -116,7 +116,7 @@
                                                     {% if result['activity_id'] %}
                                                         {% set activity_id = result['activity_id']|fmt_int %}
                                                         <div style="display: none">
-                                                            <img src="{{ url_for('map', activity_id=activity_id) }}"
+                                                            <img src="{{ url_for('activity_map', activity_id=activity_id) }}"
                                                                  id="{{ activity_id }}" alt="{{ event[0] }}"
                                                                  class="activity-map"/>/>
                                                         </div>

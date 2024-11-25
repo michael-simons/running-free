@@ -1,8 +1,9 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
-//JAVA 17
+//JAVA 23
 //DEPS com.drewnoakes:metadata-extractor:2.15.0
-//DEPS info.picocli:picocli:4.5.2
+//DEPS info.picocli:picocli:4.7.6
 //DEPS net.coobird:thumbnailator:0.4.13
+
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExitCode;
