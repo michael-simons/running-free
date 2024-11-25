@@ -2,7 +2,9 @@
 
 A collection of scripts, a database schema and a site-generator that creates https://biking.michael-simons.eu.
 The repository is provided for educational purposes.
-The whole software is catered for my needs and I doubt that is that useful for other people.
+The whole software is catered for my needs and I doubt that is that useful for other people in production.
+However, it takes an opionated approach in building a datacentric dashboard with including spatial data. 
+As most of it is driven by SQL queries, the logic and algorithm being used are not hidden away behind some bulky front- or backendcode. 
 
 ## Database schema
 
@@ -18,6 +20,12 @@ They are separated in 3 categories:
 The site generator is essentially a [Flask application](https://flask.palletsprojects.com/en/2.3.x/) which can be run with a local development server.
 The `app.py` entry-point can however be run with either `run` or `build` commands.
 The latter will freeze the site and generate static HTML files.
+
+## Tooling
+
+The `bin` folder contains mostly shell scripts to interact with both the database and external services. 
+The notable exception is `create_tiles.java`, a Java script runnable via JBang. 
+It contains most of the logic to generate the explore tiles. 
 
 ## Bookmarks
 
