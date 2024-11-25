@@ -1,5 +1,6 @@
 -- noinspection SqlResolveForFile
 
+INSTALL spatial;
 LOAD spatial;
 
 --
