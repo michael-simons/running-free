@@ -249,7 +249,7 @@ public class create_tiles implements Callable<Integer> {
 
 		/**
 		 * Depth first search implementation of "one component at a time", see
-		 * <a href=" https://en.wikipedia.org/wiki/Connected-component_labeling">Connected-component_labeling</a>.
+		 * <a href="https://en.wikipedia.org/wiki/Connected-component_labeling">Connected-component_labeling</a>.
 		 *
 		 * @param tiles the tiles to be labelled
 		 * @return the new labels
