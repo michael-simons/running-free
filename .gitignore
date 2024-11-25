@@ -16,6 +16,7 @@ Garmin
 Urkunden
 
 .venv
+.secrets
 
 ### Misc ###
 HELP.md

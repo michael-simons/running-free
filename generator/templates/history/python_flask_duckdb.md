@@ -41,3 +41,9 @@ All interaction from Python are only `FROM xxx` queries which makes the actual a
 I don't want to maintain a cloud / server / something setup of a software at the moment, but I also didn't want to mangle any existing static site generator into my use-case.
 But there's [Frozen Flask](https://pythonhosted.org/Frozen-Flask/), which essentially crawls a Flask application and renders all URLs it finds, ready to be scp'ed somewhere where HTML can be delivered.
 For adding new data or manipulate existing one I don't really need a fancy UI, the interaction I need is scripted now with a handful of shell-scripts. 
+
+Other software being used:
+
+* [Apache ECharts](https://echarts.apache.org)
+* [Leaflet](https://leafletjs.com)
+* [js-colormaps](https://github.com/timothygebhard/js-colormaps)

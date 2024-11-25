@@ -10,6 +10,7 @@
         <link rel="canonical" href="https://biking.michael-simons.eu/">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='fonts/bootstrap-icons.min.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/leaflet/leaflet.css') }}">
 
         <style>
             html {
@@ -73,6 +74,11 @@
                                 <a {% block nav_achievements %}class="nav-link" {% endblock %}
                                    href="{{ url_for('achievements') }}"><i
                                         class="bi-award"></i> Achievements</a>
+                            </li>
+                            <li class="nav-item">
+                                <a {% block nav_explorer %}class="nav-link" {% endblock %}
+                                   href="{{ url_for('explorer') }}"><i
+                                        class="bi-map"></i> Explorer</a>
                             </li>
                             <li class="nav-item">
                                 <a {% block nav_gear %}class="nav-link" {% endblock %} href="{{ url_for('gear') }}"><i

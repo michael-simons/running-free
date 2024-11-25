@@ -1,0 +1,170 @@
+{% extends "base.html.jinja2" %}
+{% block title %}Explorer | {{ super() }}{% endblock %}
+{% block nav_explorer %}class="nav-link active" aria-current="page"{% endblock %}
+{% block content %}
+    <h1 class="title">Explorer the Earth</h1>
+    <p class="lead">One tile at a time…</p>
+    <div class="row mb-4">
+        <div class="col-12">
+            {% for _summary in summary.itertuples() %}
+                <p>
+                    A single tile is a square on a slippy map quadtree at zoom level 14. This is what the usual
+                    tile-servers used in the web sent to browsers. In Western Europe a tile is roughly 1.5km by 1.5km. I
+                    cycled, ran, walked and swam <strong>{{ _summary['total_tiles']|fmt_int }}</strong> tiles in total,
+                    the biggest square is <strong>{{ _summary['max_square']|fmt_int }}</strong> by
+                    <strong>{{ _summary['max_square']|fmt_int }}</strong> and the biggest cluster contains
+                    <strong>{{ _summary['max_cluster']|fmt_int }}</strong> tiles.
+                </p>
+            {% endfor %}
+        </div>
+        <div class="col-12">
+            <form id="coloring">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="coloring-choice" id="coloring-default"
+                           value="default"
+                           checked>
+                    <label class="form-check-label" for="coloring-default">
+                        Default coloring
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="coloring-choice" id="coloring-heatmap"
+                           value="heatmap">
+                    <label class="form-check-label" for="coloring-heatmap">
+                        Heatmap by number of visits
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="coloring-choice" id="coloring-by-cluster"
+                           value="by-cluster">
+                    <label class="form-check-label" for="coloring-by-cluster">
+                        By cluster
+                    </label>
+                </div>
+            </form>
+        </div>
+        <div class="col-12">
+            <div id="map" style="width: 100%; height: 60vh;"></div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <p>
+                Heavily inspired by <a href="https://veloviewer.com">Veloviewer</a>, thanks for at least 4 fabulous
+                years in which I have been a happy, paying user. Landscape and OpenCycleMap by <a
+                    href="https://www.thunderforest.com">Thunderforest</a>.
+            </p>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/leaflet.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/js-colormaps.js') }}"></script>
+    <script>
+        window.onload = function () {
+
+            function addPopup(feature, layer) {
+                let lines = []
+                for (const property in feature.properties) {
+                    lines.push(`<dt>${property}</dt><dd>${feature.properties[property]}</dd>`)
+                }
+
+                layer.bindPopup('<dl>' + lines.join('') + '</dl>')
+            }
+
+            const osmLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap'
+            });
+            const layers = {'OpenStreetMap': osmLayer}
+
+            let defaultLayer;
+            {% if thunderforest_api_key is not none %}
+                const attribution = 'Maps © <a href="https://www.thunderforest.com">Thunderforest</a>, Data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+                const thunderforestApiKey = '{{ thunderforest_api_key }}';
+                for (const layer of [{
+                    'n': 'OpenCycleMap',
+                    'u': 'https://tile.thunderforest.com/cycle/{z}/{x}/{y}{r}.png?apikey='
+                }, {
+                    'n': 'Landscape',
+                    'u': 'https://tile.thunderforest.com/landscape/{z}/{x}/{y}{r}.png?apikey='
+                }]) {
+                    layers[layer['n']] = L.tileLayer(layer['u'] + thunderforestApiKey, {
+                        maxZoom: 18,
+                        attribution: attribution
+                    });
+                }
+                defaultLayer = layers['Landscape'];
+            {% else %}
+                layers['OpenStreetMap'] = defaultLayer = osmLayer;
+                layers['CyclOSM'] = L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://www.cyclosm.org/">CyclOSM</a>'
+                });
+            {% endif %}
+
+            const map = L.map('map', {attributionControl: false, layers: [defaultLayer]}).setView([51.505, 6], 13);
+
+            const customizedAttributionControl = L.control.attribution().addTo(map);
+            customizedAttributionControl.setPrefix('<a href="https://leafletjs.com/">Leaflet</a>');
+
+            const scaleVisit = (v, numBuckets) => {
+                const max = Math.pow(2, numBuckets)
+                const bucket = Math.min(max, Math.pow(2, Math.floor(Math.log(v) / Math.log(2))));
+                return (bucket - 1) / (max - 1);
+            }
+            const rgbToHex = (c) => {
+                return "#" + ((1 << 24) + (c[0] << 16) + (c[1] << 8) + c[2]).toString(16).slice(1);
+            }
+
+            const coloringChoice = document.getElementById("coloring").elements["coloring-choice"];
+            const tilesLayer = L.geoJSON(null, {
+                style: function (feature) {
+                    const coloring = coloringChoice.value;
+                    const partOfCluster = feature.properties.part_of_cluster;
+
+                    let color;
+                    if (coloring === 'heatmap') {
+                        color = rgbToHex(evaluate_cmap(scaleVisit(feature.properties.visited_count, 6), 'YlOrRd', true));
+                    } else if (coloring === 'by-cluster' && partOfCluster !== 'n/a') {
+                        color = rgbToHex(evaluate_cmap(scaleVisit(partOfCluster.slice(1), 10), 'tab10', true));
+                    } else {
+                        color = 'IndianRed';
+                    }
+
+                    return {weight: 0.5, color: color}
+                },
+                onEachFeature: addPopup
+            }).addTo(map);
+            const maxClustersLayer = L.geoJSON(null, {
+                style: {weight: 2, color: 'Blue'},
+                onEachFeature: addPopup
+            }).addTo(map);
+            const maxSquaresLayer = L.geoJSON(null, {
+                style: {weight: 2, color: 'Red'},
+                onEachFeature: addPopup
+            }).addTo(map);
+
+            const radioButtons = document.querySelectorAll('input[name="coloring-choice"]');
+            for (const radioButton of radioButtons) {
+                radioButton.addEventListener('change', () => tilesLayer.resetStyle());
+            }
+            L.control.layers(layers, {
+                'Tiles': tilesLayer,
+                'Max squares': maxSquaresLayer,
+                'Max clusters': maxClustersLayer
+            }).addTo(map);
+
+            fetch('{{ url_for('explorer_json', feature_type='squares') }}').then(response => response.json()).then(json => {
+                maxSquaresLayer.addData(json);
+                map.fitBounds(maxSquaresLayer.getBounds(), {animate: false});
+            });
+
+            fetch('{{ url_for('explorer_json', feature_type='clusters') }}').then(response => response.json()).then(json => {
+                maxClustersLayer.addData(json);
+            });
+
+            fetch('{{ url_for('explorer_json', feature_type='tiles') }}').then(response => response.json()).then(json => {
+                tilesLayer.addData(json);
+            });
+        }
+    </script>
+{% endblock %}

@@ -1,5 +1,7 @@
 -- noinspection SqlResolveForFile
 
+LOAD spatial;
+
 --
 -- All active bikes
 --
@@ -459,3 +461,108 @@ WITH range AS (
 )
 PIVOT weekly_avg_by_year ON sport IN ('swimming', 'cycling', 'running')
 USING first(avg) ORDER BY year;
+
+
+--
+-- v_explorer_summary
+--
+CREATE OR REPLACE VIEW v_explorer_summary AS
+WITH biggest_cluster AS (
+    SELECT count(*) AS num_tiles
+    FROM tiles
+    WHERE cluster_index <> 0
+    GROUP BY cluster_index
+    QUALIFY dense_rank() OVER (ORDER BY num_tiles DESC) = 1
+)
+SELECT count(*)                              AS total_tiles,
+       ifnull(max(square), 0)                AS max_square,
+       ifnull(any_value(biggest_cluster.num_tiles),0)  AS max_cluster
+FROM tiles, biggest_cluster;
+COMMENT ON VIEW v_explorer_summary IS 'Statistics about the explored tiles.';
+
+
+--
+-- v_explorer_clusters
+--
+CREATE OR REPLACE VIEW v_explorer_clusters AS
+WITH biggest_cluster AS (
+    SELECT cluster_index, count(*) AS num_tiles, ST_Union_Agg(geom) t, dense_rank() OVER (ORDER BY num_tiles DESC) AS rnk
+    FROM tiles
+    WHERE cluster_index <> 0
+    GROUP BY cluster_index
+    QUALIFY rnk <= 5
+),
+features AS (
+  SELECT {
+      type: 'Feature',
+      geometry: ST_AsGeoJSON(ST_ExteriorRing(t)),
+      properties: {
+        type: 'cluster',
+        cluster: cluster_index,
+        num_tiles: num_tiles
+      }
+  } AS feature
+  FROM biggest_cluster
+)
+SELECT CAST({
+  type: 'FeatureCollection',
+  features: list(feature)
+} AS JSON)
+FROM features;
+COMMENT ON VIEW v_explorer_clusters IS 'The top 5 biggest clusters.';
+
+
+--
+-- v_explorer_tiles
+--
+CREATE OR REPLACE VIEW v_explorer_tiles AS
+WITH features AS (
+  SELECT {
+      type: 'Feature',
+      geometry: ST_AsGeoJSON(geom),
+      properties: {
+          type: 'tile',
+          visited_count: visited_count,
+          visited_first_on: visited_first_on,
+          visited_last_on: visited_last_on,
+          part_of_cluster: CASE WHEN cluster_index = 0 THEN 'n/a' ELSE concat('#', cluster_index) END
+      }
+  } AS feature
+  FROM tiles
+  WHERE visited_count > 0 AND cluster_index IS NOT NULL
+)
+SELECT CAST({
+  type: 'FeatureCollection',
+  features: list(feature)
+} AS JSON)
+FROM features;
+COMMENT ON VIEW v_explorer_tiles IS 'All tiles explored.';
+
+
+--
+-- v_explorer_squares
+--
+CREATE OR REPLACE VIEW v_explorer_squares AS
+WITH biggest_squares AS (
+    SELECT * FROM tiles WHERE square IS NOT NULL
+),
+features AS (
+  SELECT {
+     type: 'Feature',
+     geometry:ST_AsGeoJSON(ST_ExteriorRing(ST_Union_Agg(t.geom))),
+     properties: {
+         type: 'square',
+         size: s.square
+     }
+  } as feature
+  FROM tiles t, biggest_squares s
+  WHERE t.x BETWEEN s.x AND s.x + s.square - 1
+  AND t.y BETWEEN s.y AND s.y + s.square - 1
+  GROUP BY s.x, s.y, s.zoom, s.square
+)
+SELECT CAST({
+  type: 'FeatureCollection',
+  features: list(feature)
+} AS JSON)
+FROM features;
+COMMENT ON VIEW v_explorer_squares IS 'The biggest square explored.';

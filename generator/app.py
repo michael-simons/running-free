@@ -16,6 +16,7 @@ import gpxpy
 import gzip
 import jinja2.exceptions
 import pandas
+import os
 
 
 def site(database: str):
@@ -62,13 +63,15 @@ def site(database: str):
     # For image generation
     font_label = ImageFont.truetype(root.joinpath("misc/FreeSans.ttf"), 36)
     font_data = ImageFont.truetype(root.joinpath("misc/FreeSansBold.ttf"), 48)
-
+    env_var = dict(os.environ)
+    api_key_key = 'THUNDERFOREST_API_KEY'
     app.jinja_env.globals.update({
         'tz': 'Europe/Berlin',
         'now': now,
         'max_year': 2023,
         'assets_present': assets_dir.is_dir(),
-        'gallery_present': gallery_dir.is_dir()
+        'gallery_present': gallery_dir.is_dir(),
+        'thunderforest_api_key': env_var[api_key_key] if api_key_key in env_var else None
     })
 
     @app.route('/')
@@ -172,6 +175,24 @@ def site(database: str):
     @app.route("/history/")
     def history():
         return flask.render_template('history.html.jinja2')
+
+    @app.route("/explorer-<feature_type>.json", )
+    def explorer_json(feature_type: str):
+        if feature_type not in ['clusters', 'tiles', 'squares']:
+            flask.abort(404)
+
+        with db.cursor() as con:
+            return con.execute("FROM query_table(?)", ['v_explorer_' + feature_type]).fetchone()[0], {
+                'content-type': 'application/json'}
+
+    @app.route("/explorer/", )
+    def explorer():
+
+        with db.cursor() as con:
+            summary = con.execute("FROM v_explorer_summary").df()
+            return flask.render_template('explorer.html.jinja2', summary=summary,
+                                         thunderforest_api_key=flask.current_app.jinja_env.globals.get(
+                                             'thunderforest_api_key'))
 
     @app.route("/map/<activity_id>.png")
     def activity_map(activity_id: int):
