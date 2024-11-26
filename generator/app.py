@@ -63,6 +63,7 @@ def site(database: str):
     track_dir = root / "tracks"
 
     # For image generation
+    font_attribution = ImageFont.truetype(root.joinpath("misc/FreeSans.ttf"), 12)
     font_label = ImageFont.truetype(root.joinpath("misc/FreeSans.ttf"), 36)
     font_data = ImageFont.truetype(root.joinpath("misc/FreeSansBold.ttf"), 48)
     env_var = dict(os.environ)
@@ -198,6 +199,12 @@ def site(database: str):
     @app.route("/map/<activity_id>.png")
     def activity_map(activity_id: int):
 
+        thunderforest_api_key = flask.current_app.jinja_env.globals.get('thunderforest_api_key')
+        if thunderforest_api_key is None:
+            url_template = 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'
+        else:
+            url_template = 'https://tile.thunderforest.com/atlas/{z}/{x}/{y}.png?apikey=' + thunderforest_api_key
+
         gpx_file = track_dir.joinpath(f'{activity_id}.gpx.gz')
         if not gpx_file.is_file():
             flask.abort(404)
@@ -211,8 +218,8 @@ def site(database: str):
                     for segment in track.segments:
                         for point in segment.points:
                             map_data.append([point.longitude, point.latitude])
-            line = Line(map_data, '#3388FF', 4)
-            m = StaticMap(1000, 1000, 10)
+            line = Line(map_data, '#CD5C5C', 4)
+            m = StaticMap(1000, 1000, 10, 0, url_template)
             m.add_line(line)
             image = m.render()
 
@@ -222,25 +229,34 @@ def site(database: str):
             margin_top_label = image.height - margin - font_data.size - font_label.size * 1.25
             margin_top_value = image.height - margin - font_data.size
 
+            font_fill = '#778899'
+            strokeFill = '#FFF'
+
             with db.cursor() as con:
                 details = con.execute('FROM v_activity_details WHERE id = ?', [activity_id]).fetchone()
                 cols = [col[0] for col in con.description]
 
                 for i, label in enumerate(
                         [details[cols.index('activity_type')].title(), "Elevation gain", "Pace", "Duration"]):
-                    d.text((margin + i * 250, margin_top_label), label, font=font_label, fill='white', stroke_width=1,
-                           stroke_fill='black')
+                    d.text((margin + i * 250, margin_top_label), label, font=font_label, fill=font_fill, stroke_width=1,
+                           stroke_fill=strokeFill)
 
-                d.text((margin, margin), details[cols.index('name')], font=font_data, fill='white', stroke_width=1,
-                       stroke_fill='black')
+                d.text((margin, margin), details[cols.index('name')], font=font_data, fill=font_fill, stroke_width=1,
+                       stroke_fill=strokeFill)
                 d.text((margin, margin_top_value), str(details[cols.index('distance')]) + "km", font=font_data,
-                       fill='white', stroke_width=1, stroke_fill='black')
+                       fill=font_fill, stroke_width=1, stroke_fill=strokeFill)
                 d.text((margin + 250, margin_top_value), str(details[cols.index('elevation_gain')]) + "m",
-                       font=font_data, fill='white', stroke_width=1, stroke_fill='black')
+                       font=font_data, fill=font_fill, stroke_width=1, stroke_fill=strokeFill)
                 d.text((margin + 500, margin_top_value), details[cols.index('pace')] + "/km", font=font_data,
-                       fill='white', stroke_width=1, stroke_fill='black')
-                d.text((margin + 750, margin_top_value), details[cols.index('duration')], font=font_data, fill='white',
-                       stroke_width=1, stroke_fill='black')
+                       fill=font_fill, stroke_width=1, stroke_fill=strokeFill)
+                d.text((margin + 750, margin_top_value), details[cols.index('duration')], font=font_data,
+                       fill=font_fill,
+                       stroke_width=1, stroke_fill=strokeFill)
+                if thunderforest_api_key is not None:
+                    d.text((margin + 2, image.height - margin + 2),
+                           'Maps © Thunderforest, Data © OpenStreetMap contributors',
+                           font=font_attribution, fill=font_fill, stroke_width=1,
+                           stroke_fill=strokeFill)
 
             image.save(filename)
 
