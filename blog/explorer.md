@@ -6,7 +6,7 @@ I am on Strava since 2018, and an avid user of [Veloviewer](https://veloviewer.c
 The latter is an outstanding service that provides great insights into your data, uploaded to Strava: Better charts, better aggregates, enriched views, you name it.
 
 Veloviewer is also the service at which I learned about [tyle cycling](https://rideeverytile.com) and the large community of [Explorers](https://blog.veloviewer.com/meet-the-explorers/) behind it.
-In short, the tiles are squares on the map and when one of your activities crosses a square it is counted as a tile.
+In short, the tiles are squares on a map and when one of your activities crosses a square it is counted as a tile.
 If you cross the connected tile left, right, top and bottom of any tile too, that tile is counted as a cluster-tile.
 The max square is based on the biggest square you can create with all the connected tiles.
 That game appeals to many people, and other services appeared, like [Squadrats](https://squadrats.com), who use smaller tiles, better suited for cities and such.

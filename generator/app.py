@@ -21,9 +21,11 @@ import os
 
 def site(database: str):
     db = duckdb.connect(database=database, read_only=True)
+    max_garmin = None
     with db.cursor() as tl_con:
         tl_con.execute("INSTALL spatial")
         tl_con.execute("LOAD spatial")
+        max_garmin = tl_con.execute('SELECT max(started_on) FROM garmin_activities').fetchone()[0]
 
     now = datetime.now()
 
@@ -71,16 +73,15 @@ def site(database: str):
         'max_year': 2023,
         'assets_present': assets_dir.is_dir(),
         'gallery_present': gallery_dir.is_dir(),
-        'thunderforest_api_key': env_var[api_key_key] if api_key_key in env_var else None
+        'thunderforest_api_key': env_var[api_key_key] if api_key_key in env_var else None,
+        'max_garmin': max_garmin if max_garmin is not None else now
     })
 
     @app.route('/')
     def index():
         with db.cursor() as con:
             summary = con.execute('FROM v_summary').df()
-            max_garmin = con.execute('SELECT max(started_on) FROM garmin_activities').fetchone()[0]
-            if max_garmin is None:
-                max_garmin = now
+            max_garmin = flask.current_app.jinja_env.globals.get('max_garmin')
             longest_streak = con.execute('FROM v_longest_streak').fetchone()
             by_year_and_sport = con.execute('FROM v_distances_by_year_and_sport WHERE year = ?', [max_garmin.year]).df()
             activity_by_year = con.execute('FROM v_daily_activity_by_year WHERE year > ?', [max_garmin.year - 2]).df()
@@ -187,12 +188,12 @@ def site(database: str):
 
     @app.route("/explorer/", )
     def explorer():
-
+        max_garmin = flask.current_app.jinja_env.globals.get('max_garmin')
+        thunderforest_api_key = flask.current_app.jinja_env.globals.get('thunderforest_api_key')
         with db.cursor() as con:
             summary = con.execute("FROM v_explorer_summary").df()
             return flask.render_template('explorer.html.jinja2', summary=summary,
-                                         thunderforest_api_key=flask.current_app.jinja_env.globals.get(
-                                             'thunderforest_api_key'))
+                                         thunderforest_api_key=thunderforest_api_key, max_garmin=max_garmin)
 
     @app.route("/map/<activity_id>.png")
     def activity_map(activity_id: int):

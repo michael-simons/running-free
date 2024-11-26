@@ -8,12 +8,18 @@
         <div class="col-12">
             {% for _summary in summary.itertuples() %}
                 <p>
-                    A single tile is a square on a slippy map quadtree at zoom level 14. This is what the usual
-                    tile-servers used in the web sent to browsers. In Western Europe a tile is roughly 1.5km by 1.5km. I
-                    cycled, ran, walked and swam <strong>{{ _summary['total_tiles']|fmt_int }}</strong> tiles in total,
-                    the biggest square is <strong>{{ _summary['max_square']|fmt_int }}</strong> by
+                    Tiles are squares on a map and when one of your activities crosses a square it is counted as a tile.
+                    If you cross the connected tile left, right, top and bottom of any tile too, that tile is counted as
+                    a cluster-tile. The max square is based on the biggest square you can create with all the connected
+                    tiles. The idea of tiles itself stems from <a href="https://en.wikipedia.org/wiki/Tiled_web_map">tiled
+                    wep maps</a>. In Western Europe a tile is roughly <strong>1.5km</strong> by <strong>1.5km</strong>.
+                </p>
+                <p>
+                    I cycled, ran, walked and swam <strong>{{ _summary['total_tiles']|fmt_int }}</strong> tiles in
+                    total, the biggest square is <strong>{{ _summary['max_square']|fmt_int }}</strong> by
                     <strong>{{ _summary['max_square']|fmt_int }}</strong> and the biggest cluster contains
-                    <strong>{{ _summary['max_cluster']|fmt_int }}</strong> tiles.
+                    <strong>{{ _summary['max_cluster']|fmt_int }}</strong> tiles. Last update to the database was on
+                    <strong>{{ max_garmin|fmt_date }}</strong>.
                 </p>
             {% endfor %}
         </div>
@@ -52,11 +58,10 @@
             <p>
                 Heavily inspired by <a href="https://veloviewer.com">Veloviewer</a>, thanks for at least 4 fabulous
                 years in which I have been a happy, paying user. Landscape and OpenCycleMap by <a
-                    href="https://www.thunderforest.com">Thunderforest</a>.
-            </p>
-            <p>
-                Here's a small <a href="https://github.com/michael-simons/biking3/blob/main/blog/explorer.md">blog</a> about
-                software behind the map above.
+                    href="https://www.thunderforest.com">Thunderforest</a>. Here's a small <a
+                    href="https://github.com/michael-simons/biking3/blob/main/blog/explorer.md">blog</a> about the
+                software behind the map above, how tiles are defined and how I compute which tiles I have visited and
+                what clusters and squares exists.
             </p>
         </div>
     </div>
