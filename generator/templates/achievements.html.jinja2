@@ -286,24 +286,25 @@
                     datasets[i].stack = 'hlp';
                 }
             }
-            datasets.push({
-                name: 'Area',
-                type: 'line',
-                data: data[data.length - 1].map((v, i) => data[0][i] - v),
-                lineStyle: {
-                    opacity: 0
-                },
-                symbol: 'none',
-                areaStyle: {
-                    color: 'rgba(124,181,235,0.4)',
-                },
-                tooltip: {
-                    show: false
-                },
-                stack: 'hlp',
-                stackStrategy: 'positive',
-
-            })
+            if (data.length !== 0) {
+                datasets.push({
+                    name: 'Area',
+                    type: 'line',
+                    data: data[data.length - 1].map((v, i) => data[0][i] - v),
+                    lineStyle: {
+                        opacity: 0
+                    },
+                    symbol: 'none',
+                    areaStyle: {
+                        color: 'rgba(124,181,235,0.4)',
+                    },
+                    tooltip: {
+                        show: false
+                    },
+                    stack: 'hlp',
+                    stackStrategy: 'positive',
+                })
+            }
 
             const domTarget = document.getElementById(target);
             const option = {

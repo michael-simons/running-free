@@ -12,40 +12,63 @@
                     If you cross the connected tile left, right, top and bottom of any tile too, that tile is counted as
                     a cluster-tile. The max square is based on the biggest square you can create with all the connected
                     tiles. The idea of tiles itself stems from <a href="https://en.wikipedia.org/wiki/Tiled_web_map">tiled
-                    wep maps</a>. In Western Europe a tile is roughly <strong>1.5km</strong> by <strong>1.5km</strong>.
+                    web maps</a>. In Western Europe a tile at zoom level 14 is roughly <strong>1.6km</strong> by
+                    <strong>1.6km</strong>.
                 </p>
                 <p>
                     I cycled, ran, walked and swam <strong>{{ _summary['total_tiles']|fmt_int }}</strong> tiles in
                     total, the biggest square is <strong>{{ _summary['max_square']|fmt_int }}</strong> by
                     <strong>{{ _summary['max_square']|fmt_int }}</strong> and the biggest cluster contains
-                    <strong>{{ _summary['max_cluster']|fmt_int }}</strong> tiles. Last update to the database was on
-                    <strong>{{ max_garmin|fmt_date }}</strong>.
+                    <strong>{{ _summary['max_cluster']|fmt_int }}</strong> tiles at zoom level <strong>14</strong>. Last
+                    update to the database was on <strong>{{ max_garmin|fmt_date }}</strong>.
                 </p>
             {% endfor %}
         </div>
         <div class="col-12">
-            <form id="coloring">
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="coloring-choice" id="coloring-default"
-                           value="default"
-                           checked>
-                    <label class="form-check-label" for="coloring-default">
-                        Default coloring
-                    </label>
+            <form id="tiles-control" class="row">
+                <div class="col-sm-6 col-lg-5 col-xl-4">
+                    <label><strong>Coloring</strong></label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="coloring-choice" id="coloring-default"
+                               value="default"
+                               checked>
+                        <label class="form-check-label" for="coloring-default">
+                            Default coloring
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="coloring-choice" id="coloring-heatmap"
+                               value="heatmap">
+                        <label class="form-check-label" for="coloring-heatmap">
+                            Heatmap by number of visits
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="coloring-choice" id="coloring-by-cluster"
+                               value="by-cluster">
+                        <label class="form-check-label" for="coloring-by-cluster">
+                            By cluster
+                        </label>
+                    </div>
                 </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="coloring-choice" id="coloring-heatmap"
-                           value="heatmap">
-                    <label class="form-check-label" for="coloring-heatmap">
-                        Heatmap by number of visits
-                    </label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="coloring-choice" id="coloring-by-cluster"
-                           value="by-cluster">
-                    <label class="form-check-label" for="coloring-by-cluster">
-                        By cluster
-                    </label>
+                <div class="col-sm-6 col-lg-5 col-xl-4">
+                    <label><strong>Zoom level</strong></label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="tile-size-choice" id="tile-size-default"
+                               value="z14"
+                               checked>
+                        <label class="form-check-label" for="tile-size-default">
+                            14 (Like <a href="https://veloviewer.com">VeloViewer</a> and <a
+                                href="https://www.statshunters.com">StatsHunters</a>)
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="tile-size-choice" id="tile-size-z17"
+                               value="z17">
+                        <label class="form-check-label" for="tile-size-z17">
+                            17 (Like <a href="https://squadrats.com">Squadrats</a>)
+                        </label>
+                    </div>
                 </div>
             </form>
         </div>
@@ -66,6 +89,8 @@
         </div>
     </div>
     <script src="{{ url_for('static', filename='js/leaflet.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/L.Control.Locate.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/Leaflet.fullscreen.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/js-colormaps.js') }}"></script>
     <script>
         window.onload = function () {
@@ -110,7 +135,10 @@
                 });
             {% endif %}
 
-            const map = L.map('map', {attributionControl: false, layers: [defaultLayer]}).setView([51.505, 6], 13);
+            const map = L.map('map', {
+                attributionControl: false,
+                layers: [defaultLayer]
+            }).setView([50.7753, 6.0839], 14);
 
             const customizedAttributionControl = L.control.attribution().addTo(map);
             customizedAttributionControl.setPrefix('<a href="https://leafletjs.com/">Leaflet</a>');
@@ -120,60 +148,116 @@
                 const bucket = Math.min(max, Math.pow(2, Math.floor(Math.log(v) / Math.log(2))));
                 return (bucket - 1) / (max - 1);
             }
+
+            let buckets = {};
+            let current = 0;
+            const tenBuckets = (v) => {
+                if (!buckets[v]) {
+                    buckets[v] = ((current++) % 10) / 10;
+                }
+                return buckets[v];
+            }
             const rgbToHex = (c) => {
                 return "#" + ((1 << 24) + (c[0] << 16) + (c[1] << 8) + c[2]).toString(16).slice(1);
             }
 
-            const coloringChoice = document.getElementById("coloring").elements["coloring-choice"];
+            const coloringChoice = document.getElementById("tiles-control").elements["coloring-choice"];
+            const tileSizeChoice = document.getElementById("tiles-control").elements["tile-size-choice"];
             const tilesLayer = L.geoJSON(null, {
                 style: function (feature) {
                     const coloring = coloringChoice.value;
                     const partOfCluster = feature.properties.part_of_cluster;
 
                     let color;
+                    let fillOpacity = 0.2;
                     if (coloring === 'heatmap') {
                         color = rgbToHex(evaluate_cmap(scaleVisit(feature.properties.visited_count, 6), 'YlOrRd', true));
-                    } else if (coloring === 'by-cluster' && partOfCluster !== 'n/a') {
-                        color = rgbToHex(evaluate_cmap(scaleVisit(partOfCluster.slice(1), 10), 'tab10', true));
+                    } else if (coloring === 'by-cluster') {
+                        if (partOfCluster !== 'n/a') {
+                            color = rgbToHex(evaluate_cmap(tenBuckets(partOfCluster.slice(1)), 'tab10', false));
+                            fillOpacity = 0.25;
+                        } else {
+                            color = 'LightSlateGray'
+                            fillOpacity = 0.15;
+                        }
                     } else {
                         color = 'IndianRed';
                     }
 
-                    return {weight: 0.5, color: color}
+                    return {weight: 0.5, color: color, fillOpacity: fillOpacity}
                 },
                 onEachFeature: addPopup
             }).addTo(map);
             const maxClustersLayer = L.geoJSON(null, {
-                style: {weight: 2, color: 'Blue'},
+                style: {weight: 2, color: 'Blue', fillOpacity: 0},
                 onEachFeature: addPopup
             }).addTo(map);
             const maxSquaresLayer = L.geoJSON(null, {
-                style: {weight: 2, color: 'Red'},
+                style: {weight: 2, color: 'Red', fillOpacity: 0},
                 onEachFeature: addPopup
             }).addTo(map);
 
-            const radioButtons = document.querySelectorAll('input[name="coloring-choice"]');
-            for (const radioButton of radioButtons) {
-                radioButton.addEventListener('change', () => tilesLayer.resetStyle());
+            const colorButtons = document.querySelectorAll('input[name="coloring-choice"]');
+            for (const button of colorButtons) {
+                button.addEventListener('change', () => tilesLayer.resetStyle());
             }
             L.control.layers(layers, {
                 'Tiles': tilesLayer,
-                'Max squares': maxSquaresLayer,
-                'Max clusters': maxClustersLayer
+                'Max clusters': maxClustersLayer,
+                'Max squares': maxSquaresLayer
             }).addTo(map);
+            map.addControl(L.control.locate());
+            map.addControl(new L.Control.Fullscreen());
 
-            fetch('{{ url_for('explorer_json', feature_type='squares') }}').then(response => response.json()).then(json => {
-                maxSquaresLayer.addData(json);
-                map.fitBounds(maxSquaresLayer.getBounds(), {animate: false});
-            });
+            const urls = {
+                'z14': {
+                    'squares': '{{ url_for('explorer_json', feature_type='squares', zoom=14) }}',
+                    'clusters': '{{ url_for('explorer_json', feature_type='clusters', zoom=14) }}',
+                    'tiles': '{{ url_for('explorer_json', feature_type='tiles', zoom=14) }}'
+                },
+                'z17': {
+                    'squares': '{{ url_for('explorer_json', feature_type='squares', zoom=17) }}',
+                    'clusters': '{{ url_for('explorer_json', feature_type='clusters', zoom=17) }}',
+                    'tiles': '{{ url_for('explorer_json', feature_type='tiles', zoom=17) }}'
+                }
+            }
 
-            fetch('{{ url_for('explorer_json', feature_type='clusters') }}').then(response => response.json()).then(json => {
-                maxClustersLayer.addData(json);
-            });
+            let firstFetch = true;
+            const fetchAll = function () {
+                const tileSize = tileSizeChoice.value;
+                maxSquaresLayer.clearLayers();
+                maxClustersLayer.clearLayers();
+                tilesLayer.clearLayers();
+                buckets = {};
+                current = 0;
 
-            fetch('{{ url_for('explorer_json', feature_type='tiles') }}').then(response => response.json()).then(json => {
-                tilesLayer.addData(json);
-            });
+                document.body.style.cursor = 'wait'
+                const squares = fetch(urls[tileSize].squares).then(response => response.json()).then(json => {
+                    return [maxSquaresLayer, json]
+                });
+                const clusters = fetch(urls[tileSize].clusters).then(response => response.json()).then(json => {
+                    return [maxClustersLayer, json]
+                });
+                const tiles = fetch(urls[tileSize].tiles).then(response => response.json()).then(json => {
+                    return [tilesLayer, json]
+                });
+
+                Promise.all([tiles, clusters, squares]).then(responses => {
+                    for (let data of responses) {
+                        data[0].addData(data[1])
+                    }
+                    if (firstFetch && Object.keys(maxSquaresLayer.getBounds()).length !== 0) {
+                        map.fitBounds(maxSquaresLayer.getBounds(), {animate: false});
+                        firstFetch = false;
+                    }
+                    document.body.style.cursor = 'default'
+                })
+            }
+            const sizeButtons = document.querySelectorAll('input[name="tile-size-choice"]');
+            for (const button of sizeButtons) {
+                button.addEventListener('change', () => fetchAll());
+            }
+            fetchAll();
         }
     </script>
 {% endblock %}

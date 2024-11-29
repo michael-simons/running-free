@@ -82,10 +82,10 @@ def site(database: str):
     def index():
         with db.cursor() as con:
             summary = con.execute('FROM v_summary').df()
-            max_garmin = flask.current_app.jinja_env.globals.get('max_garmin')
             longest_streak = con.execute('FROM v_longest_streak').fetchone()
-            by_year_and_sport = con.execute('FROM v_distances_by_year_and_sport WHERE year = ?', [max_garmin.year]).df()
-            activity_by_year = con.execute('FROM v_daily_activity_by_year WHERE year > ?', [max_garmin.year - 2]).df()
+            start_year = max_garmin.year if max_garmin is not None else now.year
+            by_year_and_sport = con.execute('FROM v_distances_by_year_and_sport WHERE year = ?', [start_year]).df()
+            activity_by_year = con.execute('FROM v_daily_activity_by_year WHERE year > ?', [start_year - 2]).df()
 
         return flask.render_template('index.html.jinja2', summary=summary, by_year_and_sport=by_year_and_sport,
                                      longest_streak=longest_streak, max_garmin=max_garmin,
@@ -178,21 +178,29 @@ def site(database: str):
     def history():
         return flask.render_template('history.html.jinja2')
 
-    @app.route("/explorer-<feature_type>.json", )
-    def explorer_json(feature_type: str):
+    @app.route("/explorer/<zoom>/<feature_type>.json", )
+    def explorer_json(zoom: str, feature_type: str):
         if feature_type not in ['clusters', 'tiles', 'squares']:
             flask.abort(404)
 
+        try:
+            zoom = int(zoom)
+        except ValueError:
+            flask.abort(404)
+
+        if zoom not in [14, 17]:
+            flask.abort(404)
+
         with db.cursor() as con:
-            return con.execute("FROM query_table(?)", ['v_explorer_' + feature_type]).fetchone()[0], {
-                'content-type': 'application/json'}
+            result = con.execute("SELECT feature_collection FROM query_table(?) WHERE zoom = ?",
+                                   ['v_explorer_' + feature_type, zoom]).fetchone()
+            return [] if result is None else result[0], {'content-type': 'application/json'}
 
     @app.route("/explorer/", )
     def explorer():
-        max_garmin = flask.current_app.jinja_env.globals.get('max_garmin')
         thunderforest_api_key = flask.current_app.jinja_env.globals.get('thunderforest_api_key')
         with db.cursor() as con:
-            summary = con.execute("FROM v_explorer_summary").df()
+            summary = con.execute("FROM v_explorer_summary WHERE zoom = 14").df()
             return flask.render_template('explorer.html.jinja2', summary=summary,
                                          thunderforest_api_key=thunderforest_api_key, max_garmin=max_garmin)
 

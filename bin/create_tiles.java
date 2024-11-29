@@ -44,6 +44,9 @@ public class create_tiles implements Callable<Integer> {
 	@CommandLine.Option(names = "--tracks-dir", required = true, defaultValue = "Garmin/Tracks")
 	private Path tracksDir;
 
+	@CommandLine.Option(names = "--zoom", required = true, defaultValue = "14")
+	private int zoom;
+
 	@CommandLine.Parameters(arity = "1")
 	private Path database;
 
@@ -68,7 +71,7 @@ public class create_tiles implements Callable<Integer> {
 			return ExitCode.USAGE;
 		}
 
-		try (var tiles = Tiles.of(tracksDir, database)) {
+		try (var tiles = Tiles.of(tracksDir, database, zoom)) {
 			tiles.update();
 		}
 
@@ -94,29 +97,28 @@ public class create_tiles implements Callable<Integer> {
 
 		private final Connection connection;
 
-		static Tiles of(Path tracksDir, Path database) throws IOException, SQLException {
-			try (
-				var allFiles = Files.list(tracksDir);
-			) {
+		private final int zoom;
+
+		static Tiles of(Path tracksDir, Path database, int zoom) throws IOException, SQLException {
+			try (var allFiles = Files.list(tracksDir)) {
 				var allGpxFiles = allFiles
 					.filter(p -> p.getFileName().toString().endsWith(".gpx.gz"))
 					.collect(Collectors.toMap(p -> p.getFileName().toString(), Function.identity()));
 
 				var connection = DriverManager.getConnection("jdbc:duckdb:" + database.toAbsolutePath());
 				connection.setAutoCommit(false);
-				try (
-					var stmt = connection.createStatement();
-				) {
+				try (var stmt = connection.createStatement()) {
 					stmt.execute("INSTALL spatial");
 					stmt.execute("LOAD spatial");
 				}
-				return new Tiles(allGpxFiles, connection);
+				return new Tiles(allGpxFiles, connection, zoom);
 			}
 		}
 
-		private Tiles(Map<String, Path> allGpxFiles, Connection connection) {
+		private Tiles(Map<String, Path> allGpxFiles, Connection connection, int zoom) {
 			this.allGpxFiles = allGpxFiles;
 			this.connection = connection;
+			this.zoom = zoom;
 		}
 
 		public void update() throws Exception {
@@ -167,7 +169,7 @@ public class create_tiles implements Callable<Integer> {
 						try (var gis = new GZIPInputStream(new FileInputStream(file.path().toFile()))) {
 							Files.copy(gis, tmp, StandardCopyOption.REPLACE_EXISTING);
 						}
-						stmt.setInt(1, 14);
+						stmt.setInt(1, this.zoom);
 						stmt.setLong(2, file.id());
 						stmt.setString(3, tmp.toString());
 						tmpFiles.add(tmp);
@@ -177,9 +179,10 @@ public class create_tiles implements Callable<Integer> {
 				}
 
 				// Mark activities as processed
-				try (var stmt = connection.prepareStatement("UPDATE garmin_activities SET gpx_processed = true WHERE garmin_id = ?")) {
+				try (var stmt = connection.prepareStatement("INSERT INTO processed_zoom_levels(garmin_id, zoom) VALUES(?, ?)")) {
 					for (var file : files) {
 						stmt.setLong(1, file.id());
+						stmt.setInt(2, this.zoom);
 						stmt.addBatch();
 					}
 					stmt.executeBatch();
@@ -194,31 +197,32 @@ public class create_tiles implements Callable<Integer> {
 
 		private Set<IdAndPath> findUnprocessedActivities() throws SQLException {
 			try (
-				var stmt = connection.createStatement();
-				var result = stmt.executeQuery("""
-					SELECT garmin_id
-					FROM garmin_activities
-					WHERE gpx_available AND NOT gpx_processed
+				var stmt = connection.prepareStatement("""
+					SELECT g.garmin_id
+					FROM garmin_activities g ANTI JOIN processed_zoom_levels z ON g.garmin_id = z.garmin_id AND z.zoom = ?
+					WHERE gpx_available
 					ORDER BY started_on DESC""")
 			) {
-				var unprocessedActivities = new HashSet<IdAndPath>();
-				while (result.next()) {
-					var id = result.getLong(1);
-					var path = allGpxFiles.get(id + ".gpx.gz");
-					if (path != null) {
-						unprocessedActivities.add(new IdAndPath(id, path));
+				stmt.setInt(1, this.zoom);
+				try (var result = stmt.executeQuery()) {
+					var unprocessedActivities = new HashSet<IdAndPath>();
+					while (result.next()) {
+						var id = result.getLong(1);
+						var path = allGpxFiles.get(id + ".gpx.gz");
+						if (path != null) {
+							unprocessedActivities.add(new IdAndPath(id, path));
+						}
 					}
+					return unprocessedActivities;
 				}
-				return unprocessedActivities;
 			}
 		}
 
 		private void findClusters() throws SQLException {
 
 			var tiles = new LinkedHashSet<Tile>();
-			try (var stmt = connection.prepareStatement("SELECT x, y, zoom FROM tiles WHERE zoom = ? ORDER BY x, y");
-			) {
-				stmt.setLong(1, 14);
+			try (var stmt = connection.prepareStatement("SELECT x, y, zoom FROM tiles WHERE zoom = ? ORDER BY x, y")) {
+				stmt.setLong(1, this.zoom);
 				try (var result = stmt.executeQuery()) {
 					while (result.next()) {
 						tiles.add(new Tile(result.getLong("x"), result.getLong("y"), result.getInt("zoom")));
@@ -233,7 +237,7 @@ public class create_tiles implements Callable<Integer> {
 			labels.entrySet().stream().sorted(Map.Entry.comparingByValue())
 				.forEach(e -> e.setValue(mapping.computeIfAbsent(e.getValue(), v -> cnt.getAndIncrement())));
 			try (
-				var stmt = connection.prepareStatement("UPDATE tiles SET cluster_index = ? WHERE x = ? AND y = ? AND zoom = ?");
+				var stmt = connection.prepareStatement("UPDATE tiles SET cluster_index = ? WHERE x = ? AND y = ? AND zoom = ?")
 			) {
 				for (Tile tile : tiles) {
 					stmt.setInt(1, labels.getOrDefault(tile, 0));
@@ -292,7 +296,7 @@ public class create_tiles implements Callable<Integer> {
 
 			Map<Integer, List<Tile>> maxSquares;
 			try (var stmt = connection.createStatement()) {
-				stmt.executeUpdate("UPDATE tiles SET square = null");
+				stmt.executeUpdate("UPDATE tiles SET square = null WHERE zoom = %d".formatted(this.zoom));
 
 				var result = stmt.executeQuery("SELECT count(distinct x) FROM tiles");
 				result.next();
@@ -301,9 +305,9 @@ public class create_tiles implements Callable<Integer> {
 
 				result = stmt.executeQuery("""
 					PIVOT (
-						SELECT x, y, concat(x, ',', y, ',', zoom) as f FROM tiles
+						SELECT x, y, concat(x, ',', y, ',', zoom) as f FROM tiles WHERE zoom = %d
 					) ON y using(any_value(f)) ORDER BY x
-					""");
+					""".formatted(zoom)); // Due to a restriction that PIVOT'ed statements might not have parameters
 				var numColumns = result.getMetaData().getColumnCount();
 				var matrix = new String[rows][numColumns];
 

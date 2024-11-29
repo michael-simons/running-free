@@ -120,7 +120,12 @@ ALTER TABLE garmin_activities ADD COLUMN IF NOT EXISTS gpx_available BOOLEAN DEF
 --
 -- Add a flag whether the GPX data was processed into tiles or not
 --
-ALTER TABLE garmin_activities ADD COLUMN IF NOT EXISTS gpx_processed BOOLEAN DEFAULT false;
+CREATE TABLE IF NOT EXISTS processed_zoom_levels (
+    garmin_id BIGINT NOT NULL,
+    zoom      UTINYINT NOT NULL,
+    PRIMARY KEY (garmin_id, zoom),
+    CONSTRAINT garmin_id_fk FOREIGN KEY(garmin_id) REFERENCES garmin_activities(garmin_id)
+);
 
 
 --

@@ -87,13 +87,15 @@ The following ER-diagram shows the tables I am going to work on:
 ```mermaid
 erDiagram
     tiles {bigint x bigint y utinyint zoom geometry geom integer visited_count date visited_first_on date visited_last_on integer cluster_index utinyint square}
-    garmin_activities {bigint garmin_id varchar name timestamp started_on varchar activity_type varchar sport_type decimal distance decimal elevation_gain integer duration integer elapsed_duration integer moving_duration tinyint v_o_2_max decimal start_longitude decimal start_latitude decimal end_longitude decimal end_latitude varchar gear boolean gpx_available boolean gpx_processed bigint device_id}
+    garmin_activities {bigint garmin_id varchar name timestamp started_on varchar activity_type varchar sport_type decimal distance decimal elevation_gain integer duration integer elapsed_duration integer moving_duration tinyint v_o_2_max decimal start_longitude decimal start_latitude decimal end_longitude decimal end_latitude varchar gear boolean gpx_available bigint device_id}
+    processed_zoom_levels {bigint garmin_id utinyint zoom}
+    garmin_activities ||--o{ processed_zoom_levels : "garmin_id"
 ```
 
-`garmin_activities` have a flag if a `GPX` file is available and if so, whether it has been processed.
+`garmin_activities` has a flag if a `GPX` file is available and `processed_zoom_levels` stores for each zoom level whether that file has been processed for the given zoom level.
 `tiles` will store all tiles I came across in any activity.
 The primary key will be `(x, y, zoom)` of course.
-The geometry column is redudant, but it spares me some CPU cycles computing it later again.
+The geometry column is redundant, but it spares me some CPU cycles computing it later again.
 The `visited_` columns are a bit of meta-data.
 `cluster_index` and `square` are the relevant bits I want to fill.
 
@@ -146,11 +148,11 @@ After I have labelled every cluster, I normalize the labels onto zero and store 
 Retrieving than the biggest cluster is matter of 5 lines SQL:
 
 ```sql
-SELECT count(*) AS num_tiles
+SELECT zoom, count(*) AS num_tiles, round(ST_Area_Spheroid(ST_Union_Agg(geom)) / 1000000, 2) AS 'Area in km^2'
 FROM tiles
 WHERE cluster_index <> 0
-GROUP BY cluster_index
-QUALIFY dense_rank() OVER (ORDER BY num_tiles DESC) = 1
+GROUP BY cluster_index, zoom
+QUALIFY dense_rank() OVER (PARTITION BY zoom ORDER BY num_tiles DESC) = 1
 ```
 
 ### Finding squares
@@ -205,10 +207,10 @@ The idea however is the same for all: Compute the single features, aggregate the
 
 ```sql
 WITH biggest_cluster AS (
-    SELECT cluster_index, count(*) AS num_tiles, ST_Union_Agg(geom) t, dense_rank() OVER (ORDER BY num_tiles DESC) AS rnk
+    SELECT cluster_index, count(*) AS num_tiles, zoom, ST_Union_Agg(geom) t, dense_rank() OVER (PARTITION BY zoom ORDER BY num_tiles DESC) AS rnk
     FROM tiles
     WHERE cluster_index <> 0
-    GROUP BY cluster_index
+    GROUP BY cluster_index, zoom
     QUALIFY rnk <= 5
 ),
 features AS (
@@ -220,19 +222,21 @@ features AS (
         cluster: cluster_index,
         num_tiles: num_tiles
       }
-  } AS feature
+  } AS feature, zoom
   FROM biggest_cluster
 )
-SELECT CAST({
+SELECT zoom, CAST({
   type: 'FeatureCollection',
   features: list(feature)
 } AS JSON)
-FROM features;
+FROM features
+GROUP BY zoom;
 ```
 
 * The Common Table Expression (CTE) named `biggest_cluster` aggregates all tiles that are part of the 5 biggest clusters into one geometry with `ST_Union_Agg`
-* In the `feature` CTE  a struct is defined that ressembles a GeoJSON feature, with the `ST_ExteriorRing` of the union from the first step turned into a GeoJSON geometry representation
-* The final select is just aggregation all features with `list` and than casting the nested structs into Json.
+* In the `feature` CTE  a struct is defined that resembles a GeoJSON feature, with the `ST_ExteriorRing` of the union from the first step turned into a GeoJSON geometry representation
+* The final select is just aggregation all features with `list` and then casting the nested structs into JSON
+* In production, I do apply `ST_ReducePrecision` for each feature in the `features` CTE, to make the generated JSON a bit more handable
 
 ## Summary
 
