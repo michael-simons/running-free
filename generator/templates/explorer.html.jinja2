@@ -12,15 +12,16 @@
                     If you cross the connected tile left, right, top and bottom of any tile too, that tile is counted as
                     a cluster-tile. The max square is based on the biggest square you can create with all the connected
                     tiles. The idea of tiles itself stems from <a href="https://en.wikipedia.org/wiki/Tiled_web_map">tiled
-                    web maps</a>. In Western Europe a tile at zoom level 14 is roughly <strong>1.6km</strong> by
-                    <strong>1.6km</strong>.
+                    web maps</a>. In Germany a tile at zoom level 14 has roughly an area of <strong>1.55km²</strong>.
                 </p>
                 <p>
                     I cycled, ran, walked and swam <strong>{{ _summary['total_tiles']|fmt_int }}</strong> tiles in
                     total, the biggest square is <strong>{{ _summary['max_square']|fmt_int }}</strong> by
-                    <strong>{{ _summary['max_square']|fmt_int }}</strong> and the biggest cluster contains
-                    <strong>{{ _summary['max_cluster']|fmt_int }}</strong> tiles at zoom level <strong>14</strong>. Last
-                    update to the database was on <strong>{{ max_garmin|fmt_date }}</strong>.
+                    <strong>{{ _summary['max_square']|fmt_int }}</strong>
+                    (<strong>~{{ _summary['max_square_area']|fmt_int }}km²</strong>) and the biggest cluster contains
+                    <strong>{{ _summary['max_cluster']|fmt_int }}</strong> tiles
+                    (<strong>~{{ _summary['max_cluster_area']|fmt_int }}km²</strong>) at zoom level
+                    <strong>14</strong>. Last update to the database was on <strong>{{ max_garmin|fmt_date }}</strong>.
                 </p>
             {% endfor %}
         </div>

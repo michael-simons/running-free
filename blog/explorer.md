@@ -148,7 +148,7 @@ After I have labelled every cluster, I normalize the labels onto zero and store 
 Retrieving than the biggest cluster is matter of 5 lines SQL:
 
 ```sql
-SELECT zoom, count(*) AS num_tiles, round(ST_Area_Spheroid(ST_Union_Agg(geom)) / 1000000, 2) AS 'Area in km^2'
+SELECT zoom, count(*) AS num_tiles, round(ST_Area_Spheroid(ST_FlipCoordinates(ST_Union_Agg(geom))) / 1000000, 2) AS 'Area in km^2'
 FROM tiles
 WHERE cluster_index <> 0
 GROUP BY cluster_index, zoom

@@ -469,19 +469,28 @@ USING first(avg) ORDER BY year;
 --
 CREATE OR REPLACE VIEW v_explorer_summary AS
 WITH biggest_clusters AS (
-    SELECT count(*) AS num_tiles, zoom
+    SELECT count(*) AS num_tiles, zoom, round(ST_Area_Spheroid(ST_FlipCoordinates(ST_Union_Agg(geom))) / 1000000, 2) AS area
     FROM tiles
     WHERE cluster_index <> 0
     GROUP BY cluster_index, zoom
     QUALIFY dense_rank() OVER (PARTITION BY zoom ORDER BY num_tiles DESC) = 1
 ),
+starting_tiles AS (
+    SELECT * FROM tiles WHERE square IS NOT NULL
+),
 biggest_squares AS (
-    SELECT zoom, square AS size FROM tiles WHERE square IS NOT NULL
+    SELECT t.zoom, s.square AS size, round(ST_Area_Spheroid(ST_FlipCoordinates(ST_Union_Agg(t.geom))) / 1000000, 2) AS area
+    FROM tiles t
+    JOIN starting_tiles s
+        ON s.zoom = t.zoom AND t.x BETWEEN s.x AND s.x + s.square - 1 AND t.y BETWEEN s.y AND s.y + s.square - 1
+    GROUP BY ALL
 )
 SELECT count(*)                              AS total_tiles,
        tiles.zoom                            AS zoom,
        ifnull(biggest_squares.size, 0)       AS max_square,
-       ifnull(biggest_clusters.num_tiles,0)  AS max_cluster
+       ifnull(biggest_squares.area, 0)       AS max_square_area,
+       ifnull(biggest_clusters.num_tiles,0)  AS max_cluster,
+       ifnull(biggest_clusters.area, 0)      AS max_cluster_area
 FROM tiles
 JOIN biggest_clusters USING(zoom)
 JOIN biggest_squares USING(zoom)
