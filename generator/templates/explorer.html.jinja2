@@ -200,7 +200,10 @@
 
             const colorButtons = document.querySelectorAll('input[name="coloring-choice"]');
             for (const button of colorButtons) {
-                button.addEventListener('change', () => tilesLayer.resetStyle());
+                button.addEventListener('change', async (event) => {
+                    event.stopPropagation();
+                    tilesLayer.resetStyle();
+                });
             }
             L.control.layers(layers, {
                 'Tiles': tilesLayer,
@@ -256,7 +259,10 @@
             }
             const sizeButtons = document.querySelectorAll('input[name="tile-size-choice"]');
             for (const button of sizeButtons) {
-                button.addEventListener('change', () => fetchAll());
+                button.addEventListener('change', async (event) => {
+                    event.stopPropagation();
+                    fetchAll();
+                });
             }
             fetchAll();
         }
