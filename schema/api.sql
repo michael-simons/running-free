@@ -468,23 +468,24 @@ USING first(avg) ORDER BY year;
 -- v_explorer_summary
 --
 CREATE OR REPLACE VIEW v_explorer_summary AS
-WITH biggest_clusters AS (
+WITH
+  biggest_clusters AS (
     SELECT count(*) AS num_tiles, zoom, round(ST_Area_Spheroid(ST_FlipCoordinates(ST_Union_Agg(geom))) / 1000000, 2) AS area
     FROM tiles
     WHERE cluster_index <> 0
     GROUP BY cluster_index, zoom
     QUALIFY dense_rank() OVER (PARTITION BY zoom ORDER BY num_tiles DESC) = 1
-),
-starting_tiles AS (
+  ),
+  starting_tiles AS (
     SELECT * FROM tiles WHERE square IS NOT NULL
-),
-biggest_squares AS (
+  ),
+  biggest_squares AS (
     SELECT t.zoom, s.square AS size, round(ST_Area_Spheroid(ST_FlipCoordinates(ST_Union_Agg(t.geom))) / 1000000, 2) AS area
     FROM tiles t
     JOIN starting_tiles s
         ON s.zoom = t.zoom AND t.x BETWEEN s.x AND s.x + s.square - 1 AND t.y BETWEEN s.y AND s.y + s.square - 1
     GROUP BY ALL
-)
+  )
 SELECT count(*)                              AS total_tiles,
        tiles.zoom                            AS zoom,
        ifnull(biggest_squares.size, 0)       AS max_square,
@@ -502,25 +503,26 @@ COMMENT ON VIEW v_explorer_summary IS 'Statistics about the explored tiles.';
 -- v_explorer_clusters
 --
 CREATE OR REPLACE VIEW v_explorer_clusters AS
-WITH biggest_cluster AS (
+WITH
+  biggest_cluster AS (
     SELECT cluster_index, count(*) AS num_tiles, zoom, ST_Union_Agg(geom) geom, dense_rank() OVER (PARTITION BY zoom ORDER BY num_tiles DESC) AS rnk
     FROM tiles
     WHERE cluster_index <> 0
     GROUP BY cluster_index, zoom
     QUALIFY rnk <= 20
-),
-features AS (
-  SELECT {
-      type: 'Feature',
-      geometry: ST_AsGeoJSON(ST_ReducePrecision(geom, 0.0001)),
-      properties: {
-        type: 'cluster',
-        cluster: cluster_index,
-        num_tiles: num_tiles
-      }
-  } AS feature, zoom, rnk
-  FROM biggest_cluster
-)
+  ),
+  features AS (
+    SELECT {
+        type: 'Feature',
+        geometry: ST_AsGeoJSON(ST_ReducePrecision(geom, 0.0001)),
+        properties: {
+          type: 'cluster',
+          cluster: cluster_index,
+          num_tiles: num_tiles
+        }
+    } AS feature, zoom, rnk
+    FROM biggest_cluster
+  )
 SELECT zoom, CAST({
   type: 'FeatureCollection',
   features: list(feature)
@@ -535,35 +537,34 @@ COMMENT ON VIEW v_explorer_clusters IS 'The top n biggest clusters.';
 -- v_explorer_tiles
 --
 CREATE OR REPLACE VIEW v_explorer_tiles AS
-WITH biggest_cluster AS (
+WITH
+  biggest_cluster AS (
     SELECT ST_Union_Agg(geom) t, dense_rank() OVER (ORDER BY count(*)  DESC) AS rnk
     FROM tiles
     WHERE cluster_index <> 0 AND zoom = 17
     GROUP BY cluster_index, zoom
     QUALIFY rnk <= 20
-),
-biggest_squares_starting_tiles AS (
-    SELECT x, y, zoom, square FROM tiles WHERE square IS NOT NULL
-),
-features AS (
-  SELECT DISTINCT {
-      type: 'Feature',
-      geometry: ST_AsGeoJSON(ST_ReducePrecision(geom, 0.0001)),
-      properties: {
-          type: 'tile',
-          visited_count: visited_count,
-          visited_first_on: visited_first_on,
-          visited_last_on: visited_last_on,
-          part_of_cluster: CASE WHEN tiles.cluster_index = 0 THEN 'n/a' ELSE concat('#', tiles.cluster_index) END
-      }
-  } AS feature, tiles.zoom, bg.t IS NOT NULL AS part_of_big_cluster, bs.square IS NOT NULL AS part_of_square
-  FROM tiles
-  LEFT OUTER JOIN biggest_cluster bg
-    ON ST_Contains(bg.t, geom)
-  LEFT OUTER JOIN biggest_squares_starting_tiles bs
-    ON bs.zoom = tiles.zoom AND tiles.x BETWEEN bs.x AND bs.x + bs.square - 1 AND tiles.y BETWEEN bs.y AND bs.y + bs.square - 1
-  WHERE visited_count > 0 AND tiles.cluster_index IS NOT NULL
-)
+  ),
+  biggest_squares_starting_tiles AS (SELECT x, y, zoom, square FROM tiles WHERE square IS NOT NULL),
+  features AS (
+    SELECT DISTINCT {
+        type: 'Feature',
+        geometry: ST_AsGeoJSON(ST_ReducePrecision(geom, 0.0001)),
+        properties: {
+            type: 'tile',
+            visited_count: visited_count,
+            visited_first_on: visited_first_on,
+            visited_last_on: visited_last_on,
+            part_of_cluster: CASE WHEN tiles.cluster_index = 0 THEN 'n/a' ELSE concat('#', tiles.cluster_index) END
+        }
+    } AS feature, tiles.zoom, bg.t IS NOT NULL AS part_of_big_cluster, bs.square IS NOT NULL AS part_of_square
+    FROM tiles
+    LEFT OUTER JOIN biggest_cluster bg
+      ON ST_Contains(bg.t, geom)
+    LEFT OUTER JOIN biggest_squares_starting_tiles bs
+      ON bs.zoom = tiles.zoom AND tiles.x BETWEEN bs.x AND bs.x + bs.square - 1 AND tiles.y BETWEEN bs.y AND bs.y + bs.square - 1
+    WHERE visited_count > 0 AND tiles.cluster_index IS NOT NULL
+  )
 SELECT zoom, CAST({
   type: 'FeatureCollection',
   features: list(feature)
@@ -578,24 +579,23 @@ COMMENT ON VIEW v_explorer_tiles IS 'All tiles explored.';
 -- v_explorer_squares
 --
 CREATE OR REPLACE VIEW v_explorer_squares AS
-WITH starting_tiles AS (
-    SELECT * FROM tiles WHERE square IS NOT NULL
-),
-features AS (
-  SELECT {
-     type: 'Feature',
-     geometry:ST_AsGeoJSON(ST_ReducePrecision(ST_ConvexHull(ST_Union_Agg(t.geom)), 0.0001)),
-     properties: {
-         type: 'square',
-         size: s.square
-     }
-  } as feature, s.zoom
-  FROM tiles t, starting_tiles s
-  WHERE t.x BETWEEN s.x AND s.x + s.square - 1
-    AND t.y BETWEEN s.y AND s.y + s.square - 1
-    AND t.zoom = s.zoom
-  GROUP BY s.x, s.y, s.zoom, s.square
-)
+WITH
+  starting_tiles AS (SELECT * FROM tiles WHERE square IS NOT NULL),
+  features AS (
+    SELECT {
+       type: 'Feature',
+       geometry:ST_AsGeoJSON(ST_ReducePrecision(ST_ConvexHull(ST_Union_Agg(t.geom)), 0.0001)),
+       properties: {
+           type: 'square',
+           size: s.square
+       }
+    } as feature, s.zoom
+    FROM tiles t, starting_tiles s
+    WHERE t.x BETWEEN s.x AND s.x + s.square - 1
+      AND t.y BETWEEN s.y AND s.y + s.square - 1
+      AND t.zoom = s.zoom
+    GROUP BY s.x, s.y, s.zoom, s.square
+  )
 SELECT zoom, CAST({
   type: 'FeatureCollection',
   features: list(feature)
