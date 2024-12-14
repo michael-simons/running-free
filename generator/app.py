@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from flask import request
 from flask_frozen import Freezer
 from numpy import nan
 from pathlib import Path
@@ -203,6 +204,25 @@ def site(database: str):
             summary = con.execute("FROM v_explorer_summary WHERE zoom = 14").df()
             return flask.render_template('explorer.html.jinja2', summary=summary,
                                          thunderforest_api_key=thunderforest_api_key, max_garmin=max_garmin)
+
+    @app.route("/unexplored", methods=['POST'])
+    def export_unexplored():
+
+        sw = request.form.get("sw")
+        ne = request.form.get("ne")
+        zoom = request.form.get("zoom")
+
+        if sw is None or ne is None or zoom is None or not zoom.isnumeric():
+            flask.abort(404)
+
+        with db.cursor() as con:
+            # Funny enough, DuckDB is unhappy without having at least one explicit cast to VARCHAR, and
+            # fails me with "Invalid Input Error: ST_GeomFromText requires a string argument"
+            result = con.execute(
+                "SELECT f_unexplored_tiles(ST_GeomFromText(?::VARCHAR), ST_GeomFromText(?::VARCHAR), ?::INT)",
+                [sw, ne, zoom]).fetchone()
+        return [] if result is None else result[0], {'content-type': 'application/json',
+                                                     'Content-Disposition': 'attachment; filename="unexplored.json"'}
 
     @app.route("/map/<activity_id>.png")
     def activity_map(activity_id: int):

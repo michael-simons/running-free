@@ -38,6 +38,8 @@ The aggregation of the computed mileage per month is just part of another [view]
 
 All interaction from Python are only `FROM xxx` queries which makes the actual application really easy to reason about. The [physical ER-Diagram](https://github.com/michael-simons/biking3/tree/main/generator/static/docs/schema.mermaid) for all tables is generated directly from the live database.
 
+I wrote a small [blog](https://github.com/michael-simons/biking3/blob/main/blog/explorer.md) about the ideas and functions behind the [explorer map](/explorer), how tiles are defined and how I compute which tiles I have visited and what clusters and squares exists.
+
 I don't want to maintain a cloud / server / something setup of a software at the moment, but I also didn't want to mangle any existing static site generator into my use-case.
 But there's [Frozen Flask](https://pythonhosted.org/Frozen-Flask/), which essentially crawls a Flask application and renders all URLs it finds, ready to be scp'ed somewhere where HTML can be delivered.
 For adding new data or manipulate existing one I don't really need a fancy UI, the interaction I need is scripted now with a handful of shell-scripts. 

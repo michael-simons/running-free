@@ -76,16 +76,27 @@
         <div class="col-12">
             <div id="map" style="width: 100%; height: 60vh;"></div>
         </div>
+        {% if not config['FREEZER_BASE_URL'] %}
+            <div class="col-12 mt-2">
+                <form id="dl" class="row-" method="POST" action="/unexplored">
+                    <div class="col-sm-6 col-lg-5 col-xl-4">
+                        <input name="sw" type="hidden"/>
+                        <input name="ne" type="hidden"/>
+                        <input name="zoom" type="hidden"/>
+                        <button type="submit" class="btn btn-light">Download unexplored tiles</button>
+                    </div>
+                </form>
+            </div>
+        {% endif %}
     </div>
     <div class="row">
         <div class="col-12">
             <p>
                 Heavily inspired by <a href="https://veloviewer.com">Veloviewer</a>, thanks for at least 4 fabulous
                 years in which I have been a happy, paying user. Landscape and OpenCycleMap by <a
-                    href="https://www.thunderforest.com">Thunderforest</a>. Here's a small <a
-                    href="https://github.com/michael-simons/biking3/blob/main/blog/explorer.md">blog</a> about the
-                software behind the map above, how tiles are defined and how I compute which tiles I have visited and
-                what clusters and squares exists.
+                    href="https://www.thunderforest.com">Thunderforest</a>. Big shout-out to <a
+                    href="https://brouter.de">brouter.de</a> and Marcus for running this <a
+                    href="https://brouter.m11n.de">brouter.m11n.de</a> instance, I totally love it for planning.
             </p>
         </div>
     </div>
@@ -139,7 +150,19 @@
             const map = L.map('map', {
                 attributionControl: false,
                 layers: [defaultLayer]
-            }).setView([50.7753, 6.0839], 14);
+            });
+
+            {% if not config['FREEZER_BASE_URL'] %}
+                map.on('moveend', function (e) {
+                    const bbox = map.getBounds();
+                    document.querySelector("#dl input[name=sw]").setAttribute("value", `POINT (${bbox.getWest()} ${bbox.getSouth()})`);
+                    document.querySelector("#dl input[name=ne]").setAttribute("value", `POINT (${bbox.getEast()} ${bbox.getNorth()})`);
+
+                    const zoom = document.getElementById("tiles-control").elements["tile-size-choice"].value.slice(1);
+                    document.querySelector("#dl input[name=zoom]").setAttribute("value", zoom);
+                });
+            {% endif %}
+            map.setView([50.7753, 6.0839], 14);
 
             const customizedAttributionControl = L.control.attribution().addTo(map);
             customizedAttributionControl.setPrefix('<a href="https://leafletjs.com/">Leaflet</a>');
