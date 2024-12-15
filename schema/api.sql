@@ -522,6 +522,7 @@ WITH
         }
     } AS feature, zoom, rnk
     FROM biggest_cluster
+   ORDER BY cluster_index
   )
 SELECT zoom, CAST({
   type: 'FeatureCollection',
@@ -563,7 +564,8 @@ WITH
       ON ST_Contains(bg.t, geom)
     LEFT OUTER JOIN biggest_squares_starting_tiles bs
       ON bs.zoom = tiles.zoom AND tiles.x BETWEEN bs.x AND bs.x + bs.square - 1 AND tiles.y BETWEEN bs.y AND bs.y + bs.square - 1
-    WHERE visited_count > 0 AND tiles.cluster_index IS NOT NULL
+   WHERE visited_count > 0 AND tiles.cluster_index IS NOT NULL
+   ORDER BY tiles.x, tiles.y
   )
 SELECT zoom, CAST({
   type: 'FeatureCollection',
