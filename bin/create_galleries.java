@@ -168,6 +168,7 @@ public class create_galleries implements Callable<Integer> {
 
 		prepareOutputFolder(imagesPerYear.keySet());
 
+		var copyright = Integer.toString(LocalDateTime.now().getYear());
 		imagesPerYear.forEach((year, images) -> {
 			var content = new StringBuilder();
 			var count = new AtomicInteger(0);
@@ -184,6 +185,7 @@ public class create_galleries implements Callable<Integer> {
 					PAGE_TEMPLATE
 						.replaceAll("\\$year", year.toString())
 						.replaceAll("\\$content", content.toString())
+						.replaceAll("\\$copyright", copyright)
 						.getBytes(StandardCharsets.UTF_8)
 				);
 			} catch (IOException e) {
@@ -224,7 +226,7 @@ public class create_galleries implements Callable<Integer> {
 					</header>
 
 					<div id="main">
-		  				$content
+						$content
 					</div>
 
 					<footer id="footer" class="panel">
@@ -240,7 +242,7 @@ public class create_galleries implements Callable<Integer> {
 									</p>
 								</section>
 								<p class="copyright">
-									&copy; 2023 by Michael J. Simons, Design by <a href="http://html5up.net">HTML5 UP</a>.<br />
+									&copy; $copyright by Michael J. Simons, Design by <a href="http://html5up.net">HTML5 UP</a>.<br />
 									While the sourcecode of this application and the gallery generator is licensed under Apache-2.0 License,
 									the images are published under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">Attribution-NonCommercial-ShareAlike 4.0 International</a>.
 								</p>
@@ -249,7 +251,7 @@ public class create_galleries implements Callable<Integer> {
 								<section>
 									<h2>Follow me on ...</h2>
 									<ul class="icons">
-										<li><a href="https://twitter.com/rotnroll666"   class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
+										<li><a href="https://mastodon.social/@rotnroll666" class="icon brands fa-mastodon"><span class="label">@rotnroll666@mastodon.social</span></a></li>
 										<li><a href="https://github.com/michael-simons" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
 										<li><a href="https://www.linkedin.com/in/michael-simons-196712139/" class="icon brands fa-linkedin-in"><span class="label">LinkedIn</span></a></li>
 									</ul>
