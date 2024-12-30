@@ -12,6 +12,7 @@ import picocli.CommandLine.Parameters;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -116,6 +117,14 @@ public class create_galleries implements Callable<Integer> {
 		if (Files.isDirectory(outputFolder)) {
 			Files.walkFileTree(outputFolder, new SimpleFileVisitor<>() {
 				@Override
+				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+					if(dir.equals(inputFolder)) {
+						return FileVisitResult.SKIP_SUBTREE;
+					}
+					return FileVisitResult.CONTINUE;
+				}
+
+				@Override
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 					Files.delete(file);
 					return FileVisitResult.CONTINUE;
@@ -123,13 +132,19 @@ public class create_galleries implements Callable<Integer> {
 
 				@Override
 				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-					Files.delete(dir);
+					if (Files.list(dir).count() == 0) {
+						Files.delete(dir);
+					}
 					return FileVisitResult.CONTINUE;
 				}
 			});
 		}
 
-		Files.deleteIfExists(outputFolder);
+		try {
+			Files.deleteIfExists(outputFolder);
+		} catch (DirectoryNotEmptyException ex) {
+			// This is fine, it happens when the input folder is nested in the target folder.
+		}
 		for (Integer year : years) {
 			Files.createDirectories(outputFolder.resolve(Path.of(year.toString())));
 		}
