@@ -72,7 +72,7 @@ def site(database: str):
     app.jinja_env.globals.update({
         'tz': 'Europe/Berlin',
         'now': now,
-        'max_year': 2023,
+        'max_year': 2024,
         'assets_present': assets_dir.is_dir(),
         'gallery_present': gallery_dir.is_dir(),
         'thunderforest_api_key': env_var[api_key_key] if api_key_key in env_var else None,
