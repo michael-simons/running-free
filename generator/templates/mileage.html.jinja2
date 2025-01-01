@@ -12,8 +12,8 @@
         {% for summary in ytd_summary.itertuples() %}
             <div>
                 <p>
-                    My preferred bike in <strong>{{ now.strftime('%Y') }}</strong> is my
-                    <strong>{{ summary['preferred_bike'] }}</strong> so far. This year's mileage accumulates to
+                    My preferred bike in <strong id="last_year">{{ summary['last_recording'].strftime('%Y') }}</strong>
+                    is my <strong>{{ summary['preferred_bike'] }}</strong>. That year's mileage accumulates to
                     <strong>{{ summary['total']|fmt_double }}km</strong>, making up for an average
                     <strong>{{ summary['avg_per_month']|fmt_double }}km</strong> per month. The worst month was
                     <strong>{{ summary['worst_month'].strftime('%B %Y') }}</strong> with
@@ -100,7 +100,7 @@
                 const option = {
                     animation: false,
                     title: {
-                        text: "Milage in {{ now.strftime('%Y') }}",
+                        text: "Milage in " + document.getElementById("last_year").innerText,
                         left: 'center',
                         textStyle: {
                             fontSize: 14

@@ -90,43 +90,46 @@ CREATE OR REPLACE VIEW v_summary AS (
 -- Mileages over all bikes and assorted trips in the current year (year-today)
 --
 CREATE OR REPLACE VIEW v_ytd_summary AS (
-  WITH sum_of_milages AS (
-    SELECT month,
-           sum(value) AS value
-    FROM v$_mileage_by_bike_and_month
-    WHERE month BETWEEN date_trunc('year', current_date()) AND date_trunc('month', current_date())
-    GROUP BY ROLLUP (month)
-  ),
-  sum_of_assorted_trips AS (
-    SELECT date_trunc('month', covered_on) AS month,
-           coalesce(sum(distance),      0) AS value
-    FROM assorted_trips
-    WHERE month BETWEEN date_trunc('year', current_date()) AND date_trunc('month', current_date())
-    GROUP BY ROLLUP (month)
-  ),
-  summary AS (
-    SELECT max(d.range)::date                                                  AS last_recording,
-           arg_min(d.range, coalesce(m.value, 0) + coalesce(t.value, 0))::date AS worst_month,
-           min(coalesce(m.value, 0) + coalesce(t.value, 0))                    AS worst_month_value,
-           arg_max(d.range, coalesce(m.value, 0) + coalesce(t.value, 0))::date AS best_month,
-           max(coalesce(m.value, 0) + coalesce(t.value, 0))                    AS best_month_value
-    FROM range(date_trunc('year', current_date()), date_trunc('year', current_date()) + interval 12 month, interval 1 month) d
-      LEFT OUTER JOIN sum_of_milages m ON m.month = d.range
-      LEFT OUTER JOIN sum_of_assorted_trips t ON t.month = d.range
-    WHERE m.value IS NOT NULL OR t.value IS NOT NULL
-  ),
-  sum_of_milages_by_bike AS (
-    SELECT bike,
-           sum(value) AS value
-    FROM v$_mileage_by_bike_and_month
-    WHERE month BETWEEN date_trunc('year', current_date()) AND date_trunc('month', current_date())
-    GROUP BY bike
-  )
+  WITH
+    lm AS (SELECT value FROM v$_last_mileage),
+    sum_of_milages AS (
+      SELECT month,
+             sum(mbb.value) AS value
+      FROM lm, v$_mileage_by_bike_and_month mbb
+      WHERE month BETWEEN date_trunc('year', lm.value) AND date_trunc('month', lm.value)
+      GROUP BY ROLLUP (month)
+    ),
+    sum_of_assorted_trips AS (
+      SELECT date_trunc('month', covered_on) AS month,
+             coalesce(sum(distance),      0) AS value
+      FROM lm, assorted_trips
+      WHERE month BETWEEN date_trunc('year', lm.value) AND date_trunc('month', lm.value)
+      GROUP BY ROLLUP (month)
+    ),
+    summary AS (
+      SELECT max(d.range)::date                                                  AS last_recording,
+             arg_min(d.range, coalesce(m.value, 0) + coalesce(t.value, 0))::date AS worst_month,
+             min(coalesce(m.value, 0) + coalesce(t.value, 0))                    AS worst_month_value,
+             arg_max(d.range, coalesce(m.value, 0) + coalesce(t.value, 0))::date AS best_month,
+             max(coalesce(m.value, 0) + coalesce(t.value, 0))                    AS best_month_value
+      FROM lm, range(date_trunc('year', lm.value), date_trunc('year', lm.value) + interval 12 month, interval 1 month) d
+        LEFT OUTER JOIN sum_of_milages m ON m.month = d.range
+        LEFT OUTER JOIN sum_of_assorted_trips t ON t.month = d.range
+      WHERE m.value IS NOT NULL OR t.value IS NOT NULL
+    ),
+    sum_of_milages_by_bike AS (
+      SELECT bike,
+             sum(mbb.value) AS value
+      FROM lm, v$_mileage_by_bike_and_month mbb
+      WHERE month BETWEEN date_trunc('year', lm.value) AND date_trunc('month', lm.value)
+      GROUP BY bike
+    )
   SELECT s.*,
          (SELECT arg_max(bike, value) FROM sum_of_milages_by_bike)                                           AS preferred_bike,
          coalesce(m.value, 0) + coalesce(t.value, 0)                                                         AS total,
-         total / date_diff('month', date_trunc('year', current_date()), s.last_recording + interval 1 month) AS avg_per_month
-  FROM sum_of_milages m,
+         total / date_diff('month', date_trunc('year', lm.value), s.last_recording + interval 1 month) AS avg_per_month
+  FROM lm,
+       sum_of_milages m,
        sum_of_assorted_trips t,
        summary s
   WHERE m.month IS NULL
@@ -139,10 +142,10 @@ CREATE OR REPLACE VIEW v_ytd_summary AS (
 -- Monthly totals in the current year.
 --
 CREATE OR REPLACE VIEW v_ytd_totals AS (
-  SELECT * replace(strftime(month, '%B') AS month)
-  FROM v$_total_mileage_by_month
-  WHERE month >= date_trunc('year', current_date())
-    AND month <= last_day(date_trunc('month', current_date()))
+  SELECT mbm.* replace(strftime(month, '%B') AS month)
+  FROM v$_last_mileage lm, v$_total_mileage_by_month mbm
+  WHERE month >= date_trunc('year', lm.value)
+    AND month <= last_day(date_trunc('month', lm.value))
 );
 
 
@@ -151,10 +154,10 @@ CREATE OR REPLACE VIEW v_ytd_totals AS (
 --
 CREATE OR REPLACE VIEW v_ytd_bikes AS (
     SELECT mbbm.*
-    FROM v$_mileage_by_bike_and_month mbbm
+    FROM v$_last_mileage lm, v$_mileage_by_bike_and_month mbbm
     JOIN bikes b ON (b.name = mbbm.bike)
-    WHERE month >= date_trunc('year', current_date())
-      AND month <= last_day(date_trunc('month', current_date()))
+    WHERE month >= date_trunc('year', lm.value)
+      AND month <= last_day(date_trunc('month', lm.value))
       AND NOT b.miscellaneous
 );
 

@@ -55,3 +55,16 @@ CREATE OR REPLACE VIEW v$_pace_percentiles_per_distance_and_year AS (
   GROUP BY value, year
   ORDER BY try_cast(value AS integer) NULLS LAST, year
 );
+
+
+--
+-- Last recorded mileage
+--
+CREATE OR REPLACE VIEW v$_last_mileage AS (
+  WITH hlp(v) AS (
+    SELECT CAST(recorded_on - INTERVAL 1 MONTH AS DATE) FROM milages
+    UNION ALL
+    SELECT covered_on FROM assorted_trips
+  )
+  SELECT last_day(max(v)) AS value FROM hlp
+);
