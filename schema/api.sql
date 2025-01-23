@@ -328,6 +328,21 @@ CREATE OR REPLACE VIEW v_health_by_age AS (
 
 
 --
+-- Measured body metrics
+--
+CREATE OR REPLACE VIEW v_body_metrics AS (
+  SELECT ref_date,
+         ifnull(chronological_age, date_sub('year', dob.value::date, ref_date)) AS chronological_age,
+         weight,
+         body_fat,
+         blood_pressure.* REPLACE(coalesce(blood_pressure.pulse, resting_heart_rate) AS pulse)
+  FROM health_metrics, user_profile dob
+  WHERE dob.name = 'date_of_birth'
+  ORDER BY ref_date
+);
+
+
+--
 -- SHOES
 --
 CREATE OR REPLACE VIEW v_shoes AS

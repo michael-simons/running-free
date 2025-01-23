@@ -211,6 +211,8 @@ CREATE TABLE IF NOT EXISTS health_metrics (
   lowest_spo2_value  UTINYINT
 );
 
+ALTER TABLE health_metrics ADD COLUMN IF NOT EXISTS blood_pressure STRUCT(systolic UTINYINT, diastolic UTINYINT, pulse UTINYINT);
+
 
 --
 -- Shoes
