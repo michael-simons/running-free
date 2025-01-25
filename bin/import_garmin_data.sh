@@ -27,9 +27,9 @@ duckdb "$DB" -s "
   INSERT INTO health_metrics BY NAME (
     SELECT COLUMNS(c -> c NOT LIKE 'bp\_%' ESCAPE '\'),
            CASE WHEN bp_systolic IS NOT NULL AND bp_diastolic IS NOT NULL THEN
-              {'systolic':  bp_systolic::utinyint,
-               'diastolic': bp_diastolic::utinyint,
-               'pulse':     bp_pulse::utinyint}
+              {'systolic':  list_reduce(split(bp_systolic, '-'), (l, h) -> {low: l::UTINYINT, high: h::UTINYINT}),
+               'diastolic': list_reduce(split(bp_diastolic, '-'), (l, h) -> {low: l::UTINYINT, high: h::UTINYINT}),
+               'pulse':     bp_pulse::UTINYINT}
            ELSE NULL END AS blood_pressure
     FROM read_csv_auto('/dev/stdin')
   ) ON CONFLICT DO NOTHING

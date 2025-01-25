@@ -212,7 +212,12 @@ CREATE TABLE IF NOT EXISTS health_metrics (
 );
 
 ALTER TABLE health_metrics ADD COLUMN IF NOT EXISTS blood_pressure STRUCT(systolic UTINYINT, diastolic UTINYINT, pulse UTINYINT);
-
+ALTER TABLE health_metrics DROP COLUMN IF EXISTS blood_pressure;
+ALTER TABLE health_metrics ADD COLUMN IF NOT EXISTS blood_pressure STRUCT(
+    systolic  STRUCT(low UTINYINT, high UTINYINT),
+    diastolic STRUCT(low UTINYINT, high UTINYINT),
+    pulse UTINYINT
+);
 
 --
 -- Shoes

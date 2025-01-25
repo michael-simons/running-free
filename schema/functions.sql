@@ -117,3 +117,14 @@ CREATE OR REPLACE FUNCTION f_unexplored_tiles(p_sw, p_ne, p_zoom) AS (
     } AS JSON) AS feature_collection
   FROM new_tiles
 );
+
+
+--
+-- Formats a struct containing low and high values as l-h if they are unequal, as l if they are equal
+-- @param p_lh a struct
+--
+CREATE OR REPLACE FUNCTION f_format_lh(p_lh) AS (
+  SELECT CASE
+    WHEN p_lh['low'] = p_lh['high'] THEN p_lh['low']::VARCHAR
+    ELSE p_lh['low'] || '-' || p_lh['high'] END
+);

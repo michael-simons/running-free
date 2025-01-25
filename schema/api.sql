@@ -307,11 +307,13 @@ CREATE OR REPLACE VIEW v_specs AS (
 --
 CREATE OR REPLACE VIEW v_health_by_age AS (
   SELECT year(ref_date) AS year,
-         list(distinct ifnull(chronological_age, date_sub('year', dob.value::date, ref_date))) AS chronological_age,
+         last(ifnull(chronological_age, date_sub('year', dob.value::date, ref_date))) AS chronological_age,
          cast(round(avg(biological_age) FILTER (WHERE biological_age IS NOT NULL)) AS int) AS avg_biological_age,
-         cast(round(avg(resting_heart_rate) FILTER (WHERE resting_heart_rate IS NOT NULL)) AS int) AS avg_resting_heart_rate,
-         round(avg(weight) FILTER (WHERE weight IS NOT NULL), 2) AS avg_weight,
+         cast(round(avg(weight) FILTER (WHERE weight IS NOT NULL), 2) AS int) AS avg_weight,
          round(avg(body_fat) FILTER (WHERE body_fat IS NOT NULL), 2) AS avg_body_fat,
+         cast(round(avg(resting_heart_rate) FILTER (WHERE resting_heart_rate IS NOT NULL)) AS int) AS avg_resting_heart_rate,
+         cast(round(avg((blood_pressure.systolic.low + blood_pressure.systolic.high) / 2)) AS int) AS avg_systolic_bp,
+         cast(round(avg((blood_pressure.diastolic.low + blood_pressure.diastolic.high) / 2)) AS int) AS avg_diastolic_bp,
          cast(round(avg(avg_stress_level) FILTER (WHERE avg_stress_level IS NOT NULL)) AS int) AS avg_stress_level,
          round(avg(vo2max_biometric) FILTER (WHERE vo2max_biometric IS NOT NULL), 2) AS avg_vo2max,
          round(avg(vo2max_running) FILTER (WHERE vo2max_running IS NOT NULL), 2) AS avg_vo2max_running,
@@ -335,7 +337,9 @@ CREATE OR REPLACE VIEW v_body_metrics AS (
          ifnull(chronological_age, date_sub('year', dob.value::date, ref_date)) AS chronological_age,
          weight,
          body_fat,
-         blood_pressure.* REPLACE(coalesce(blood_pressure.pulse, resting_heart_rate) AS pulse)
+         coalesce(resting_heart_rate, blood_pressure.pulse) AS resting_heart_rate,
+         f_format_lh(blood_pressure.systolic)  AS systolic,
+         f_format_lh(blood_pressure.diastolic) AS diastolic
   FROM health_metrics, user_profile dob
   WHERE dob.name = 'date_of_birth'
   ORDER BY ref_date
