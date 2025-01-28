@@ -52,6 +52,7 @@ CREATE OR REPLACE FUNCTION f_unify_activity_type(activity_type) AS (
     WHEN activity_type IN ('gravel_cycling', 'mountain_biking', 'cycling', 'road_biking') THEN 'cycling'
     WHEN activity_type IN ('track_running', 'running', 'treadmill_running') THEN 'running'
     WHEN activity_type IN ('lap_swimming', 'open_water_swimming', 'swimming') THEN 'swimming'
+    WHEN activity_type IN ('hiking', 'walking') THEN 'walking'
   END
 );
 

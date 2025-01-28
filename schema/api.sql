@@ -372,7 +372,7 @@ WITH sports AS (
 SELECT year(started_on) AS year, sport, round(sum(distance)) AS value
 FROM sports
 GROUP BY ALL
-ORDER BY ALL;
+ORDER BY year, value DESC, sport;
 
 
 --
